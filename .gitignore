@@ -3,7 +3,7 @@
 #ignore Notebook Checkpoints
 .ipynb_checkpoints/
 #largefile Model
-model/
+#model/
 ipython
 #wandb
 wandb/
