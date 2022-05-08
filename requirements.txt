@@ -1,0 +1,19 @@
+torch==1.11.0  -f https://download.pytorch.org/whl/cpu/torch_stable.html
+matplotlib 
+tqdm
+numpy
+wandb
+networkx
+imageio
+#torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.10.0+cu113.html+
+torch-geometric -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html 
+torch-sparse  -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html 
+torch-scatter -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html 
+torch-cluster -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html 
+torch-spline-conv  -f https://pytorch-geometric.com/whl/torch-1.11.0+cpu.html 
+#torch-geometric -f https://pytorch-geometric.com/whl/torch-1.11.0+cu113.html
+#torch-sparse -f https://pytorch-geometric.com/whl/torch-1.11.0+cu113.html
+#torch-scatter -f https://pytorch-geometric.com/whl/torch-1.11.0+cu113.html
+#torch-cluster -f https://pytorch-geometric.com/whl/torch-1.11.0+cu113.html
+#torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.11.0+cu113.html
+open_spiel
