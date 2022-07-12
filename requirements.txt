@@ -5,3 +5,5 @@ wandb
 networkx
 imageio
 open_spiel
+jupyter
+
