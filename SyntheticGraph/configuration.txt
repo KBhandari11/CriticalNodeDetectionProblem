@@ -1,5 +1,0 @@
-'erdos_renyi': p=0.2
-'powerlaw': m=3, p=0.05
-'small-world': k=6, p=0.1
-'barabasi_albert':m=3
-

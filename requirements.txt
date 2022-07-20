@@ -1,9 +1,0 @@
-matplotlib 
-tqdm
-numpy
-wandb
-networkx
-imageio
-open_spiel
-jupyter
-
