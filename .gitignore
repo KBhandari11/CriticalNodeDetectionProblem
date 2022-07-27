@@ -1,0 +1,13 @@
+#ignore VS code 
+.vscode/
+#ignore Notebook Checkpoints
+.ipynb_checkpoints/
+#largefile Model
+#model/
+ipython
+#wandb
+wandb/
+__pycache__
+.DS_Store
+#graphworld
+graphworld/

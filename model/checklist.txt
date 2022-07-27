@@ -1,0 +1,13 @@
+model_BAGraph: 65,000
+model_differentGraph: 65,000
+FINDER: 20,000 iteration
+Model Description:
+replay_buffer_capacity= int(1e3)    #"Size of the replay buffer."
+batch_size = 64      #"Learning"
+learning_rate = 0.01   #"Learning Rate"
+update_target_network = 500 #"Update the target network"
+discount_factor=1.0   
+epsilon_start=1.0
+epsilon_end=0.1
+optimizer_str="adam"
+loss_str="huber
