@@ -147,7 +147,6 @@ class GraphState(pyspiel.State):
       self.global_feature = global_feature(self.Graph)
       self.lcc = [get_lcc(self.Graph)]
       self.r = []
-      #self.alpha = (1-nx.density(self.Graph.subgraph(np.arange(len(self.Graph)-1)))) # For Supernode
       self.alpha = (1-nx.density(self.Graph))
       self.beta = [molloy_reed(self.Graph)]
 
