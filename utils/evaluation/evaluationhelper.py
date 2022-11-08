@@ -31,4 +31,4 @@ def EvaluateACTION(env, action_list,GRAPH):
         if env.get_state._is_terminal == True:
             break
     lcc = env.get_state.lcc
-    return episode_rewards, lcc, action_list
+    return episode_rewards, lcc, action_list[:len(lcc)]

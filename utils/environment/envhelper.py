@@ -11,7 +11,7 @@ def gen_graph(cur_n, g_type,seed=None):
     if g_type == 'erdos_renyi':
         g = nx.erdos_renyi_graph(n=cur_n, p=random.uniform(0.10,0.15),seed = seed)
     elif g_type == 'powerlaw':
-        g = nx.powerlaw_cluster_graph(n=cur_n, m=random.randint(2,4), p=random.uniform(0.1,0.5),seed = seed)
+        g = nx.powerlaw_cluster_graph(n=cur_n, m=random.randint(2,4), p=random.uniform(0.01,0.05),seed = seed)
     elif g_type == 'small-world':
         g = nx.newman_watts_strogatz_graph(n=cur_n, k=random.randint(2,5), p=random.uniform(0.1,0.2),seed = seed)
     elif g_type == 'barabasi_albert':

@@ -1,0 +1,4 @@
+homogeneous 30 &\cellcolor{blue!25} 0.344828 & 0.448276 &\cellcolor{blue!25} 0.344828 & 0.413793 & 0.896552\\ 
+homogeneous 50 & 0.300000 & 0.340000 &\cellcolor{blue!25} 0.240000 & 0.320000 & 0.720000\\ 
+homogeneous 100 & 0.329787 & 0.329787 &\cellcolor{blue!25} 0.234043 & 0.287234 & 0.702128\\ 
+homogeneous 500 & 0.272532 & 0.276824 & 0.182403 &\cellcolor{blue!25} 0.094421 & 0.476395\\ 

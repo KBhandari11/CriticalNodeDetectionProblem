@@ -221,8 +221,10 @@ class DQN(rl_agent.AbstractAgent):
                 is_final_step=float(time_step.last()),
                 legal_actions_mask=legal_actions_mask)
             self._replay_buffer.add(transition)
-        
-
+  def get_best_centrality(centrality_features):
+          best_value, index = torch.index_select(x, 1, torch.tensor([i for i in range(self.num_features)])), torch.randint((0,self.num_features))
+          return best_value[index]
+ 
   def _epsilon_greedy(self,num_nodes, info_state,global_feature,legal_actions, epsilon):
     """Returns a valid epsilon-greedy action and valid action probs.
     Action probabilities are given by a softmax over legal q-values.
@@ -236,9 +238,9 @@ class DQN(rl_agent.AbstractAgent):
     size = int(num_nodes)
     probs = np.zeros(size)
     if np.random.rand() < epsilon:
-      hd_values = torch.index_select(info_state.x, 1, torch.tensor([0]))
-      legal_hd_values = hd_values[legal_actions]
-      action = legal_actions[torch.argmax(legal_hd_values)]
+      best_value = get_best_centrality(infostate.x)
+      legal_best_value = best_value[legal_actions]
+      action = legal_actions[torch.argmax(legal_best_values)]
       probs[action] = 1.0
     else:
       q_values = self._q_network(info_state.x,info_state.edge_index,global_feature).detach()
