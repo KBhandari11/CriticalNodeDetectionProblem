@@ -1,4 +1,4 @@
-heterogeneous_30 & \cellcolor{blue!25} 0.347826 & 0.391304 & 0.391304 & 0.391304 & 0.652174\\ 
-heterogeneous_50 & 0.333333 & 0.333333 & \cellcolor{blue!25}0.305556 & 0.388889 & 0.722222\\ 
-heterogeneous_100 & 0.355263 & 0.276316 &\cellcolor{blue!25} 0.210526 & 0.210526 & 0.631579\\ 
-heterogeneous_500 & 0.205314 & 0.256039 &\cellcolor{blue!25} 0.140097 & 0.147343 & 0.591787\\ 
+heterogeneous 30 & 0.609 & \cellcolor{blue!25}0.478 & 0.478 & 1.000 & 1.000 & 0.696\\ 
+heterogeneous 50 & 0.611 & 0.583 & \cellcolor{blue!25}0.528 & 1.000 & 1.000 & 0.889\\ 
+heterogeneous 100 & 0.684 & 0.605 & \cellcolor{blue!25}0.447 & 1.000 & 1.000 & 0.803\\ 
+heterogeneous 500 & 0.565 & 0.565 & \cellcolor{blue!25}0.447 & 1.000 & 1.000 & 0.763\\ 

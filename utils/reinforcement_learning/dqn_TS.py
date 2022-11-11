@@ -98,9 +98,9 @@ class DQN(rl_agent.AbstractAgent):
     self._last_loss_value = None
 
     # Create the Q-network instances
-    self._q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size)#.to(self.device) #num_actions
+    self._q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size).to(self.device) #num_actions
 
-    self._target_q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size)#.to(self.device)
+    self._target_q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size).to(self.device)
     # Q network outputs approx single feature embedded value = approx q value for each Noder
     if loss_str == "mse":
       self.loss_class = F.mse_loss
@@ -221,10 +221,8 @@ class DQN(rl_agent.AbstractAgent):
                 is_final_step=float(time_step.last()),
                 legal_actions_mask=legal_actions_mask)
             self._replay_buffer.add(transition)
-  def get_best_centrality(centrality_features):
-          best_value, index = torch.index_select(x, 1, torch.tensor([i for i in range(self.num_features)])), torch.randint((0,self.num_features))
-          return best_value[index]
  
+   
   def _epsilon_greedy(self,num_nodes, info_state,global_feature,legal_actions, epsilon):
     """Returns a valid epsilon-greedy action and valid action probs.
     Action probabilities are given by a softmax over legal q-values.
@@ -238,9 +236,10 @@ class DQN(rl_agent.AbstractAgent):
     size = int(num_nodes)
     probs = np.zeros(size)
     if np.random.rand() < epsilon:
-      best_value = get_best_centrality(infostate.x)
+      index = torch.randint(0,self.num_feature,(1,))
+      best_value = torch.index_select(info_state.x, 1, index)
       legal_best_value = best_value[legal_actions]
-      action = legal_actions[torch.argmax(legal_best_values)]
+      action = legal_actions[torch.argmax(legal_best_value)]
       probs[action] = 1.0
     else:
       q_values = self._q_network(info_state.x,info_state.edge_index,global_feature).detach()
@@ -265,7 +264,7 @@ class DQN(rl_agent.AbstractAgent):
   def max_next_q_value(self,target_q,legal_actions_mask):
     illegal_actions = 1 - legal_actions_mask
     illegal_logits = illegal_actions * ILLEGAL_ACTION_LOGITS_PENALTY
-    all_target_q = torch.add(target_q, torch.tensor(illegal_logits))
+    all_target_q = torch.add(target_q, torch.tensor(illegal_logits,device = self.device))
     max_target_q = torch.amax(all_target_q,0)
     return max_target_q
   
@@ -297,10 +296,10 @@ class DQN(rl_agent.AbstractAgent):
         target_q_values.append(torch.flatten(self._target_q_network(next_info_states.x,next_info_states.edge_index,next_global_feature)))
         are_final_steps.append(t.is_final_step)
         max_next_q.append(self.max_next_q_value(target_q_values[-1].detach(),t.legal_actions_mask))
-    actions = torch.LongTensor(np.array(actions))
-    rewards = torch.Tensor(np.array(rewards))
-    are_final_steps = torch.Tensor(np.array(are_final_steps))
-    max_next_q = torch.Tensor(np.array(max_next_q))
+    actions = torch.LongTensor(actions)
+    rewards = torch.Tensor(rewards)
+    are_final_steps = torch.Tensor(are_final_steps)
+    max_next_q = torch.Tensor(max_next_q)
     self._q_values = q_values
     self._target_q_values = target_q_values
     #print('Qvalues', self._q_values)
@@ -312,14 +311,13 @@ class DQN(rl_agent.AbstractAgent):
     for i in range(self._batch_size):
         target.append((rewards[i] + (1 - are_final_steps[i]) * nstep_gamma * max_next_q[i]))
         prediction.append(self._q_values[i][actions[i].item()])
-    target = torch.stack(target)
+    target = torch.stack(target).to(self.device)
     prediction = torch.stack(prediction)
     loss = self.loss_class(prediction, target)
     self._optimizer.zero_grad()
     loss.backward()
     self._optimizer.step()
     return loss
-
 
   @property
   def q_values(self):

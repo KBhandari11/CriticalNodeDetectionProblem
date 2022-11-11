@@ -144,7 +144,7 @@ def network_dismantle(board, init_lcc):
     all_nodes =  np.array(list(board.nodes(data="active")))[:,1]
     active_nodes =  np.where(all_nodes == 1)[0]
     largest_cc = get_lcc(board)
-    cond = True if len(active_nodes) <= 2 or len(board.edges()) == 1  or (largest_cc/init_lcc) <= 0.15 else False
+    cond = True if len(active_nodes) <= 2 or len(board.edges()) == 1  or (largest_cc/init_lcc) <= 0.1 else False
     return cond, largest_cc
 
 def board_to_string(board):

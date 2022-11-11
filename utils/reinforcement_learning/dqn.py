@@ -61,14 +61,8 @@ class DQN(rl_agent.AbstractAgent):
                GraphNN = GraphNN):
     """Initialize the DQN agent."""
 
-    # This call to locals() is used to store every argument used to initialize
-    # the class instance, so it can be copied with no hyperparameter change.
-    self._kwargs = locals()
-
     self.player_id = player_id
     self._num_actions = num_actions
-    """if isinstance(hidden_layers_sizes, int):
-      hidden_layers_sizes = [hidden_layers_sizes]"""
     self.num_feature = state_representation_size
     self.global_feature_size = global_feature_size
     self._layer_sizes = hidden_layers_sizes

@@ -1,3 +1,5 @@
+from  utils.environment.envhelper import*
+
 # Given an environment and an trained agent we implement the agent
 def EvaluateModel(env, trained_agents,GRAPH):
     """Evaluates `trained_agents` against a new graph."""
@@ -19,7 +21,7 @@ def EvaluateModel(env, trained_agents,GRAPH):
     return episode_rewards, lcc, action_lists
 
 # Given an environmnet with all action in  a list 
-def EvaluateACTION(env, action_list,GRAPH):
+'''def EvaluateACTION(env, action_list,GRAPH):
     """Evaluates the env for given action_list"""
     env.reset(GRAPH)
     episode_rewards = []
@@ -31,4 +33,22 @@ def EvaluateACTION(env, action_list,GRAPH):
         if env.get_state._is_terminal == True:
             break
     lcc = env.get_state.lcc
-    return episode_rewards, lcc, action_list[:len(lcc)]
+    return episode_rewards, lcc, action_list[:len(lcc)]'''
+def network_dismantle(graph, init_lcc):
+    largest_cc = get_lcc(graph)
+    cond = True if (largest_cc/init_lcc) <= 0.0001 else False
+    return cond, largest_cc
+
+def EvaluateACTION(env, action_list,GRAPH):
+    """Evaluates the env for given action_list"""
+    lcc = [get_lcc(GRAPH)]
+    act = []
+    for action in action_list:
+        ebunch = list(GRAPH.edges(action))
+        GRAPH.remove_edges_from(ebunch)
+        cond, l = network_dismantle(GRAPH, lcc[0])
+        lcc.append(l)
+        act.append(action)
+        if cond:
+            break
+    return None, lcc[0:len(GRAPH)], act

@@ -1,11 +1,11 @@
-corruption & \cellcolor{blue!25}0.220065 & 0.365696 & 0.067961 & 0.142395 & 0.744337\\ 
-foodweb-baywet & 0.726562 & 0.656250 & 0.593750 &\cellcolor{blue!25} 0.562500 & 0.859375\\ 
-inf-USAir97 & 0.171687 &\cellcolor{blue!25} 0.189759 & 0.180723 & 0.240964 & 0.740964\\ 
-moreno_crime_projected & 0.042440 & 0.112732 & 0.071618 &\cellcolor{blue!25} 0.050398 & 0.371353\\ 
-opsahl-openflights & 0.116366 & \cellcolor{blue!25}0.134740 & 0.126233 & 0.105478 & 0.650561\\ 
-household & 0.212812 & 0.199783 & 0.188925 & \cellcolor{blue!25}0.187839 & 0.743757\\ 
-faa & 0.196574 & 0.185971 & 0.153344 & 0.133768 & 0.613377\\ 
-facebook &\cellcolor{blue!25} 0.005194 & 0.739958 & 0.001731 & 0.123961 & 0.032548\\ 
-powergrid & 0.083384 & 0.082372 & 0.072455 &\cellcolor{blue!25} 0.060109 & 0.279296\\ 
-netscience & 0.038330 & 0.054757 & 0.045175 &\cellcolor{blue!25} 0.019165 & 0.293634\\ 
-HI-II-14 & 0.139976 & 0.850180 & 0.105402 &\cellcolor{blue!25} 0.095558 & 0.515966\\ 
+corruption & 0.883 & 0.874 & \cellcolor{blue!25}0.874 & 1.000 & 1.000 & 0.994\\ 
+foodweb-baywet & 0.938 & 0.812 & \cellcolor{blue!25}0.688 & 1.000 & 1.000 & 1.000\\ 
+inf-USAir97 & 0.560 & 0.527 & \cellcolor{blue!25}0.488 & 1.000 & 1.000 & 0.834\\ 
+moreno_crime_projected & \cellcolor{blue!25}0.639 & 0.639 & 0.683 & 1.000 & 1.000 & 0.849\\ 
+opsahl-openflights & 0.466 & 0.458 & \cellcolor{blue!25}0.418 & 1.000 & 1.000 & 0.752\\ 
+household & 0.467 & 0.457 & \cellcolor{blue!25}0.450 & 1.000 & 1.000 & 0.744\\ 
+faa & 0.596 & 0.582 & \cellcolor{blue!25}0.538 & 1.000 & 1.000 & 0.880\\ 
+facebook & 0.009 & 0.741 & \cellcolor{blue!25}0.003 & 1.000 & 1.000 & 0.033\\ 
+powergrid & 0.559 & 0.558 & \cellcolor{blue!25}0.526 & 1.000 & 1.000 & 0.679\\ 
+netscience & \cellcolor{blue!25}0.635 & 0.773 & 0.791 & 1.000 & 1.000 & 0.781\\ 
+HI-II-14 & 0.365 & 0.958 & \cellcolor{blue!25}0.299 & 1.000 & 1.000 & 0.609\\ 
