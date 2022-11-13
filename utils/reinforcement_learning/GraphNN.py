@@ -41,6 +41,7 @@ class GraphNN(nn.Module):
   def forward(self, node_feature, edge_index, global_x):
         
     x, edge_index,global_x = node_feature.to(self.device), edge_index.to(self.device),global_x.to(self.device)
+
     #MLP for Global Features
     global_x = self.linear_global1(global_x)
     global_x = self.linear_global2(global_x)

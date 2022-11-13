@@ -20,7 +20,7 @@ def crossvalidation_data(graph_type=None,seed=None):
         Cross_Graph = gen_new_graphs(['erdos_renyi', 'powerlaw','small-world', 'barabasi_albert'],seed)
     else:   
         Cross_Graph = gen_new_graphs(graph_type,seed)
-    NUM = len(Cross_Graph)
+    NUM = Cross_Graph.vcount()
     x  =  np.flip(np.arange(NUM)[NUM:0:-1]/NUM)
     return Cross_Graph, x
 

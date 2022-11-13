@@ -19,9 +19,9 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from utils.reinforcement_learning.replay_buffer import ReplayBuffer
+from utils.reinforcement_learning.rl_agent import AbstractAgent
 from utils.reinforcement_learning.GraphNN import GraphNN
-from open_spiel.python import rl_agent
-#from open_spiel.python.utils.replay_buffer import ReplayBuffer
+
 
 Transition = collections.namedtuple(
     "Transition", "info_state global_feature action reward next_info_state next_global_feature is_final_step legal_actions_mask")
@@ -29,19 +29,14 @@ Transition = collections.namedtuple(
 ILLEGAL_ACTION_LOGITS_PENALTY = -1e9
 
 
-
-
-
-class DQN(rl_agent.AbstractAgent):
+class DQN(AbstractAgent):
   """DQN Agent implementation in PyTorch.
   See open_spiel/python/examples/breakthrough_dqn.py for an usage example.
   """
 
   def __init__(self,
-               player_id,
                state_representation_size,
                global_feature_size,
-               num_actions,
                hidden_layers_sizes=[[4,3],[5,3],[6,4,3]],
                output_layer_size =1,
                replay_buffer_capacity=10000,
@@ -61,15 +56,6 @@ class DQN(rl_agent.AbstractAgent):
                loss_str="huber",
                GraphNN = GraphNN):
     """Initialize the DQN agent."""
-
-    # This call to locals() is used to store every argument used to initialize
-    # the class instance, so it can be copied with no hyperparameter change.
-    self._kwargs = locals()
-
-    self.player_id = player_id
-    self._num_actions = num_actions
-    """if isinstance(hidden_layers_sizes, int):
-      hidden_layers_sizes = [hidden_layers_sizes]"""
     self.num_feature = state_representation_size
     self.global_feature_size = global_feature_size
     self._layer_sizes = hidden_layers_sizes
@@ -84,13 +70,13 @@ class DQN(rl_agent.AbstractAgent):
     self.power = power
     self.n_steps =  nsteps
     self.nstep_buffer = []
-    # TODO(author6) Allow for optional replay buffer config.
+ 
     if not isinstance(replay_buffer_capacity, int):
       raise ValueError("Replay buffer capacity not an integer.")
     self._replay_buffer = replay_buffer_class(replay_buffer_capacity)
     self._prev_timestep = None
     self._prev_action = None
-    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+    self.device =torch.device("cuda" if torch.cuda.is_available() else "cpu")    
     # Step counter to keep track of learning, eps decay and target network.
     self._step_counter = 0
 
@@ -129,19 +115,18 @@ class DQN(rl_agent.AbstractAgent):
     """
 
     # Act step: don't act at terminal info states or if its not our turn.
-    if (not time_step.last()) and (
-        time_step.is_simultaneous_move() or
-        self.player_id == time_step.current_player()):
+    if (not time_step.last()):
       num_nodes = time_step.observations["num_nodes"]
-      info_state = time_step.observations["info_state"][self.player_id]
-      legal_actions = time_step.observations["legal_actions"][self.player_id]
+      info_state = time_step.observations["info_state"]
+      legal_actions = time_step.observations["legal_actions"]
       global_feature = time_step.observations["global_feature"]
       self.epsilon = self._get_epsilon(is_evaluation,power=self.power)
       action, probs = self._epsilon_greedy(num_nodes,info_state,global_feature, legal_actions, self.epsilon)
     else:
+      info_state = time_step.observations["info_state"]
       action = None
       probs = []
-    #if legal_actions <= 5
+
     # Don't mess up with the state during evaluation.
     if not is_evaluation:
       self._step_counter += 1
@@ -154,8 +139,7 @@ class DQN(rl_agent.AbstractAgent):
         # module.
         self._target_q_network.load_state_dict(self._q_network.state_dict())
 
-      if self._prev_timestep and add_transition_record:
-        # We may omit record adding here if it's done elsewhere.
+      if self._prev_timestep and add_transition_record and (info_state.edge_index.size(dim=0) != 0):
         self.add_transition(self._prev_timestep, self._prev_action, time_step)
 
       if time_step.last():  # prepare for the next episode.
@@ -166,7 +150,7 @@ class DQN(rl_agent.AbstractAgent):
         self._prev_timestep = time_step
         self._prev_action = action
 
-    return rl_agent.StepOutput(action=action, probs=probs)
+    return action, probs
 
   def add_transition(self, prev_time_step, prev_action, time_step):
     """Adds the new transition using `time_step` to the replay buffer.
@@ -182,7 +166,7 @@ class DQN(rl_agent.AbstractAgent):
     if(len(self.nstep_buffer)<self.n_steps):
         return
     _num_actions = time_step.observations["num_nodes"]
-    legal_actions = (time_step.observations["legal_actions"][self.player_id])
+    legal_actions = (time_step.observations["legal_actions"])
     legal_actions_mask = np.zeros(_num_actions)
     legal_actions_mask[legal_actions] = 1.0
     
@@ -190,15 +174,14 @@ class DQN(rl_agent.AbstractAgent):
     sum_reward = 0 
     for i in range(self.n_steps):
         step = self.nstep_buffer[i][2]
-        sum_reward += step.rewards[self.player_id]*( self._discount_factor**i) 
+        sum_reward += step.rewards*(self._discount_factor**i) 
     prev_time_step, prev_action, _ = self.nstep_buffer.pop(0)
     transition = Transition(
-        info_state=prev_time_step.observations["info_state"][self.player_id],
+        info_state=prev_time_step.observations["info_state"],
         global_feature = prev_time_step.observations["global_feature"],
         action=prev_action,
         reward=sum_reward,
-        #reward=time_step.rewards[self.player_id],
-        next_info_state=time_step.observations["info_state"][self.player_id],
+        next_info_state=time_step.observations["info_state"],
         next_global_feature = time_step.observations["global_feature"],
         is_final_step=float(time_step.last()),
         legal_actions_mask=legal_actions_mask)
@@ -208,21 +191,20 @@ class DQN(rl_agent.AbstractAgent):
             sum_reward = 0 
             for i in range(len(self.nstep_buffer)):
                 step = self.nstep_buffer[i][2]
-                sum_reward += step.rewards[self.player_id]*( self._discount_factor**i) 
+                sum_reward += step.rewards*( self._discount_factor**i) 
             prev_time_step, prev_action, _ = self.nstep_buffer.pop(0)
             transition = Transition(
-                info_state=prev_time_step.observations["info_state"][self.player_id],
+                info_state=prev_time_step.observations["info_state"],
                 global_feature = prev_time_step.observations["global_feature"],
                 action=prev_action,
                 reward=sum_reward,
-                #reward=time_step.rewards[self.player_id],
-                next_info_state=time_step.observations["info_state"][self.player_id],
+                next_info_state=time_step.observations["info_state"],
                 next_global_feature = time_step.observations["global_feature"],
                 is_final_step=float(time_step.last()),
                 legal_actions_mask=legal_actions_mask)
             self._replay_buffer.add(transition)
- 
-   
+        
+
   def _epsilon_greedy(self,num_nodes, info_state,global_feature,legal_actions, epsilon):
     """Returns a valid epsilon-greedy action and valid action probs.
     Action probabilities are given by a softmax over legal q-values.
@@ -302,9 +284,6 @@ class DQN(rl_agent.AbstractAgent):
     max_next_q = torch.Tensor(max_next_q)
     self._q_values = q_values
     self._target_q_values = target_q_values
-    #print('Qvalues', self._q_values)
-    #print("illegallogits",illegal_logits)
-    #print('targetvalues', self._target_q_values)
     target=[]
     prediction=[]
     nstep_gamma = (self._discount_factor**self.n_steps)
@@ -318,6 +297,7 @@ class DQN(rl_agent.AbstractAgent):
     loss.backward()
     self._optimizer.step()
     return loss
+
 
   @property
   def q_values(self):
@@ -349,19 +329,8 @@ class DQN(rl_agent.AbstractAgent):
     return variables
 
   def copy_with_noise(self, sigma=0.0, copy_weights=True):
-    """Copies the object and perturbates it with noise.
-    Args:
-      sigma: gaussian dropout variance term : Multiplicative noise following
-        (1+sigma*epsilon), epsilon standard gaussian variable, multiplies each
-        model weight. sigma=0 means no perturbation.
-      copy_weights: Boolean determining whether to copy model weights (True) or
-        just model hyperparameters.
-    Returns:
-      Perturbated copy of the model.
-    """
     _ = self._kwargs.pop("self", None)
     copied_object = DQN(**self._kwargs)
-
     q_network = getattr(copied_object, "_q_network")
     target_q_network = getattr(copied_object, "_target_q_network")
     if copy_weights:
