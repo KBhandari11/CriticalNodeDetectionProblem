@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np 
 from sklearn.metrics import auc
-
+import random 
 from utils.environment.envhelper import gen_new_graphs, reset
 
 def crossvalidation_data_homogenity(validation_path):
@@ -27,7 +27,7 @@ def crossvalidation_data(graph_type=None,seed=None):
 def area_under_curve(number_nodes,lcc):
     return auc(number_nodes,lcc)
 
-def get_Validation(num, file_path=None):
+def get_Validation(num, file_path=None,seed=None):
     evaluation = []
     x = []
     if file_path != None:
@@ -39,7 +39,7 @@ def get_Validation(num, file_path=None):
                 x.append(iteration)
     else:
         for i in range(num):
-            graph, iteration =  crossvalidation_data()
+            graph, iteration =  crossvalidation_data(['erdos_renyi','barabasi_albert'],seed=seed)
             evaluation.append(graph)
             x.append(iteration)
     return evaluation, x    

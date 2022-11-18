@@ -5,7 +5,7 @@ import networkx as nx
 from torch_geometric.data import Data
 from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
-from igraph import Graph
+from igraph import Graph,ARPACKOptions
 
 
 def gen_graph(cur_n, g_type,seed=None):
@@ -49,14 +49,15 @@ def reset(graph):
 
 # Helper functions for game details.
 def get_lcc(g):
-    return len(max(g.connected_components(), key=len))
+    G = g.to_networkx()
+    return len(max(nx.connected_components(G), key=len))
     
 
 def molloy_reed(g):
   all_degree = np.array(g.degree())
-  #degs = all_degree
-  nonmax_lcc = list(set(g.vs.indices).difference(set(max(g.connected_components(), key=len))))
-  degs = np.delete(all_degree, np.array(nonmax_lcc, dtype=int))#for non max LCC
+  degs = all_degree
+  #nonmax_lcc = list(set(g.vs.indices).difference(set(max(g.connected_components(mode='weak'), key=len))))
+  #degs = np.delete(all_degree, np.array(nonmax_lcc, dtype=int))#for non max LCC
   #degs = np.delete(deg,-1)#for supernode
   k = degs.mean()
   k2 = np.mean(degs** 2)
@@ -89,16 +90,37 @@ def global_feature(g):
         entrop = 0
         transitivity = g.transitivity_undirected()
     global_properties = np.hstack((density,resilience,heterogeneity,gini,entrop,transitivity))
+    global_properties = np.nan_to_num(global_properties,nan = 0)
     #global_properties = np.hstack((density,resilience,heterogeneity))
     global_properties = torch.from_numpy(global_properties.astype(np.float32))#.to(device)
     return global_properties
 
-
+def get_Ball(g,v,l,n):
+    if l == 1:
+        return [v]
+    else:
+        for i in g.neighbors(v):
+            if not(i in n):
+                a = get_Ball(g,i,l-1,n)
+                if a == None:
+                    n = list(set().union([i],n))
+                else:
+                    n = list(set().union(a,[i],n))
+            #print('n',n)
+        if v in n:
+            return list(set(n)-set([v]))
+        else:
+            return n
+         
 def get_ci(g, l):
     ci = []
     degs = np.array(g.degree())
+    #G_nx = g.to_networkx()
     for i in g.vs.indices:
-        n = np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
+        n = get_Ball(g,i,l,[i]) #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
+        #print("path",n)
+        #print("ball",get_Ball(g,i,l,[i]))
+        #print("networkx",list(nx.single_source_shortest_path(G_nx,i,l))[0:])
         j = np.sum(degs[n] - 1)
         ci.append((g.degree(i) - 1) * j)
     ci = np.array(ci)
@@ -112,15 +134,22 @@ def get_centrality_features(g):
     degree_centrality = np.array(g.degree()) / (g.vcount() - 1)
     #precolation_centrality = list(nx.percolation_centrality(g,attribute='active').values())
     #closeness_centrality = list(nx.closeness_centrality(g).values())
-    eigen_centrality = np.array(g.eigenvector_centrality())
-    clustering_coeff = np.array(g.transitivity_local_undirected())
-    core_num = np.nan_to_num(np.array(g.coreness('all')),nan = 0)
-    pagerank = np.array(g.pagerank())
+    try:
+        eigen_centrality = np.array(g.eigenvector_centrality())
+    except:
+        #ARPACKOptions.tol =  int(10e-2)
+        #value = Graph.arpack_defaults.tol = int(10e-2)
+        eigen_centrality = np.array(g.eigenvector_centrality(options= ARPACKOptions))
+    #clustering_coeff = np.array(g.transitivity_local_undirected())
+    #core_num = np.nan_to_num(np.array(g.coreness('all')),nan = 0)
+    #G = g.to_networkx()
+    #core_num = np.array(list(nx.core_number(G).values()))
+    pagerank = np.array(g.personalized_pagerank())
     ci = get_ci(g, 3)
     #active = np.array(g.nodes.data("active"))[:,1]
-    #x = np.column_stack((925egree_centrality,clustering_coeff,pagerank, core_num ))
-    x = np.column_stack((degree_centrality,eigen_centrality,pagerank,clustering_coeff, core_num, ci ))
-    #x = np.column_stack((degree_centrality,eigen_centrality,pagerank))
+    #x = np.column_stack((degree_centrality,clustering_coeff,pagerank, core_num ))
+    #x = np.column_stack((degree_centrality,eigen_centrality,pagerank,clustering_coeff, core_num, ci ))
+    x = np.column_stack((degree_centrality,eigen_centrality,pagerank,ci))
     x = np.nan_to_num(x,nan = 0)
     return x
 
@@ -144,7 +173,7 @@ def network_dismantle(board, init_lcc):
     all_nodes = np.array(board.vs["active"])
     active_nodes = np.where(all_nodes == 1)[0]
     largest_cc = get_lcc(board)
-    cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (largest_cc/init_lcc) <= 0.001 else False
+    cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (largest_cc/init_lcc) <= 0.1 else False
     #print(cond,len(active_nodes),board.ecount(),(largest_cc/init_lcc))
     return cond, largest_cc
 

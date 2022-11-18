@@ -1,4 +1,4 @@
-homogeneous 30 & 0.483 & 0.483 & \cellcolor{blue!25}0.483 & 1.000 & 1.000 & 0.931\\ 
-homogeneous 50 & 0.460 & 0.480 & \cellcolor{blue!25}0.460 & 1.000 & 1.000 & 0.880\\ 
-homogeneous 100 & 0.489 & 0.468 & \cellcolor{blue!25}0.468 & 1.000 & 1.000 & 0.840\\ 
-homogeneous 500 & \cellcolor{blue!25}0.464 & 0.464 & 0.474 & 1.000 & 1.000 & 0.893\\ 
+homogeneous 30 & 0.690 & 0.621 & \cellcolor{blue!25}0.517 & 0.897 & 1.000 & 1.000 & 0.931\\ 
+homogeneous 50 & 0.600 & 0.580 & \cellcolor{blue!25}0.540 & 0.960 & 1.000 & 1.000 & 0.880\\ 
+homogeneous 100 & 0.638 & 0.638 & \cellcolor{blue!25}0.511 & 0.915 & 1.000 & 1.000 & 0.840\\ 
+homogeneous 500 & 0.678 & 0.682 & 0.318 & \cellcolor{blue!25}0.318 & 0.457 & 0.858 & 0.886\\ 

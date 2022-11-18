@@ -1,9 +1,9 @@
 {
     "architecture": "GAT and DQN",
     "dataset": "Synthetic Dataset:erdos_renyi,powerlaw,small-world,barabasi_albert ",
-    "centrality_feature_name":"Deg,Eigen,CC,K-Core,PgRnk,CI",
+    "centrality_feature_name":"Deg,Eigen,PgRnk,CI",
     "global_feature_name":"Hetero,Dens,Res,Gini,Entro,Transi",
-    "centrality_features": 6,
+    "centrality_features": 4,
     "global_features": 6,
     "save_every": 500,
     "num_train_episodes":5e5,
@@ -14,15 +14,15 @@
     "hidden_layers":[[5,3],[5,3],[6,4,3]] ,
     "replay_buffer_capacity":1e5,
     "batch_size":32,
-    "learning_rate":0.01,
+    "learning_rate":0.001,
     "update_target_network_every": 1000,
-    "learn_every":75,
+    "learn_every":100,
     "discount_factor": 0.99,
     "min_buffer_size_to_learn": 1000,
     "epsilon_power":4.0,
-    "nstep":1,
+    "nstep":3,
     "epsilon_start":1.0,
-    "epsilon_end":0.1,
+    "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
-    "checkpoint_dir": "./model/DiffSize_Different_Graph_TS/model_differentGraph"
+    "checkpoint_dir": "./model/DiffSize_Different_Graph/model_differentGraph"
 }

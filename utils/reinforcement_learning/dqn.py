@@ -77,7 +77,7 @@ class DQN(AbstractAgent):
     self._replay_buffer = replay_buffer_class(replay_buffer_capacity)
     self._prev_timestep = None
     self._prev_action = None
-    self.device =torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
     # Step counter to keep track of learning, eps decay and target network.
     self._step_counter = 0
 
