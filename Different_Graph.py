@@ -4,8 +4,8 @@ from utils.environment.game import GraphGame
 from utils.reinforcement_learning.rl_environment import Environment
 from utils.validation import get_Validation,area_under_curve
 from utils.environment.envhelper import gen_new_graphs
-#from utils.reinforcement_learning.dqn_TS import DQN
-from utils.reinforcement_learning.dqn import DQN
+from utils.reinforcement_learning.dqn_TS import DQN
+#from utils.reinforcement_learning.dqn import DQN
 from utils.params import Params
 
 from tqdm import tqdm

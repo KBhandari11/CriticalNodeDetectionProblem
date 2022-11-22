@@ -32,7 +32,7 @@ def EvaluateModel(env, trained_agent,GRAPH):
     return episode_rewards, lcc, action_list[:len(lcc)]'''
 def eval_network_dismantle(graph, init_lcc):
     largest_cc = get_lcc(graph)
-    cond = True if (largest_cc/init_lcc) <= 0.1 else False
+    cond = True if (largest_cc/init_lcc) <= 0.01 else False
     return cond, largest_cc
 
 def EvaluateACTION(action_list,GRAPH):

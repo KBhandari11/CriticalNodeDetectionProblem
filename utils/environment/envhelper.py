@@ -3,9 +3,10 @@ import numpy as np
 import torch
 import networkx as nx
 from torch_geometric.data import Data
+from torch_geometric.utils import to_undirected
 from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
-from igraph import Graph,ARPACKOptions
+from igraph import Graph
 
 
 def gen_graph(cur_n, g_type,seed=None):
@@ -48,10 +49,20 @@ def reset(graph):
     return graph 
 
 # Helper functions for game details.
-def get_lcc(g):
+'''def get_lcc(g):
     G = g.to_networkx()
-    return len(max(nx.connected_components(G), key=len))
-    
+    return len(max(nx.connected_components(G), key=len))'''
+def get_lcc(G):
+    found = set()
+
+    comps = []
+    for v in G.vs.indices:
+        if v not in found:
+            connected = G.bfs(v)[0]
+            found.update(connected)
+            comps.append(connected)
+
+    return len(max(comps, key=len))   
 
 def molloy_reed(g):
   all_degree = np.array(g.degree())
@@ -139,7 +150,7 @@ def get_centrality_features(g):
     except:
         #ARPACKOptions.tol =  int(10e-2)
         #value = Graph.arpack_defaults.tol = int(10e-2)
-        eigen_centrality = np.array(g.eigenvector_centrality(options= ARPACKOptions))
+        eigen_centrality = np.array(g.eigenvector_centrality())
     #clustering_coeff = np.array(g.transitivity_local_undirected())
     #core_num = np.nan_to_num(np.array(g.coreness('all')),nan = 0)
     #G = g.to_networkx()
@@ -173,7 +184,7 @@ def network_dismantle(board, init_lcc):
     all_nodes = np.array(board.vs["active"])
     active_nodes = np.where(all_nodes == 1)[0]
     largest_cc = get_lcc(board)
-    cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (largest_cc/init_lcc) <= 0.1 else False
+    cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (largest_cc/init_lcc) <= 0.01 else False
     #print(cond,len(active_nodes),board.ecount(),(largest_cc/init_lcc))
     return cond, largest_cc
 
@@ -185,4 +196,6 @@ def board_to_string(board):
 def from_igraph(graph):
     edges = [edge.tuple for edge in graph.es]
     edge_index = torch.tensor(edges, dtype=torch.int).t().contiguous()
+    if edge_index.shape[0]!= 0:
+        edge_index = to_undirected(edge_index)
     return Data(x=features(graph),edge_index=edge_index)
