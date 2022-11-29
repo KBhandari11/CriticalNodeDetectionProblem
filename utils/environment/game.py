@@ -54,7 +54,7 @@ class GraphState():
     self._returns = 0
     self.lcc = [get_lcc(self.Graph)]
     self.r = []
-    self.alpha = 1#(1-nx.density(self.Graph))
+    self.alpha = 0.75#(1-nx.density(self.Graph))
     self.beta = [molloy_reed(self.Graph)]
 
   def _legal_actions(self):
