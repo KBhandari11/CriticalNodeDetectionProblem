@@ -4,8 +4,8 @@ from utils.environment.game import GraphGame
 from utils.reinforcement_learning.rl_environment import Environment
 from utils.validation import get_Validation, area_under_curve
 from utils.environment.envhelper import gen_new_graphs
-from utils.reinforcement_learning.dqn import DQN
-#from utils.reinforcement_learning.dqn_TS import DQN
+from utils.reinforcement_learning.dqn_TS import DQN
+#from utils.reinforcement_learning.dqn import DQN
 from utils.params import Params
 from tqdm import tqdm
 import torch
@@ -28,7 +28,8 @@ params = Params("./utils/ba_params.json")
 
 # WandB – Initialize a new run
 now = datetime.now()
-wandb.init(entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=now.strftime("%d/%m/%Y %H:%M:%S"),config=params)
+#wandb.init(entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=now.strftime("%d/%m/%Y %H:%M:%S"),config=params)
+wandb.init(entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=params.wandb_name,config=params)
 wandb.watch_called = False # Re-run the model without restarting the runtime, unnecessary after our next release
 
 def Generate_Batch_Graph(size,seed = None):

@@ -87,23 +87,24 @@ def global_feature(g):
     div = k2 - k1**2
     if k1 != 0:
         heterogeneity = div/k1
-        density = (2*M)/(N*(N-1))
-        resilience = k2/k1
-        degs.sort()
-        gini = np.sum(degs * (degs + 1))/(M*N) - (N+1)/N
-        entrop = entropy(degs/M)/N
-        transitivity = g.transitivity_undirected()
+        #density = (2*M)/(N*(N-1))
+        #resilience = k2/k1
+        #degs.sort()
+        #gini = np.sum(degs * (degs + 1))/(M*N) - (N+1)/N
+        #entrop = entropy(degs/M)/N
+        #transitivity = g.transitivity_undirected()
     else:
         heterogeneity = 0
-        density = (2*M)/(N*(N-1))
-        resilience = 0
-        gini = 0
-        entrop = 0
-        transitivity = g.transitivity_undirected()
-    global_properties = np.hstack((density,resilience,heterogeneity,gini,entrop,transitivity))
+        #density = (2*M)/(N*(N-1))
+        #resilience = 0
+        #gini = 0
+        #entrop = 0
+        #transitivity = g.transitivity_undirected()
+    global_properties = [heterogeneity]#np.hstack((density,resilience,heterogeneity,gini,entrop,transitivity))
     global_properties = np.nan_to_num(global_properties,nan = 0)
     #global_properties = np.hstack((density,resilience,heterogeneity))
-    global_properties = torch.from_numpy(global_properties.astype(np.float32))#.to(device)
+    global_properties = torch.from_numpy(global_properties.astype(np.float32))#.to(device)'''
+    #global_properties = torch.empty((6,0), dtype=torch.float)
     return global_properties
 
 def get_Ball(g,v,l,n):
@@ -123,6 +124,7 @@ def get_Ball(g,v,l,n):
         else:
             return n
          
+
 def get_ci(g, l):
     ci = []
     degs = np.array(g.degree())
@@ -141,6 +143,21 @@ def get_ci(g, l):
         ci = (ci - np.mean(ci))
     return ci
 
+'''
+def get_ci(g, l):
+    ci = []
+    degs = np.array(g.degree())
+    for i in g.vs.indices:
+        n = [path[-1] for path in g.get_all_shortest_paths(i) if path and len(path) <= l]
+        print(n)
+        if i in n:
+            n = n.remove(i)
+        print(n)
+        n = np.array(n)
+        j = np.sum(degs[n] - 1)
+        ci.append((g.degree(i) - 1) * j)
+    return ci
+'''
 def get_centrality_features(g):
     degree_centrality = np.array(g.degree()) / (g.vcount() - 1)
     #precolation_centrality = list(nx.percolation_centrality(g,attribute='active').values())
@@ -156,11 +173,12 @@ def get_centrality_features(g):
     #G = g.to_networkx()
     #core_num = np.array(list(nx.core_number(G).values()))
     pagerank = np.array(g.personalized_pagerank())
-    ci = get_ci(g, 3)
+    ci = get_ci(g, 2)
     #active = np.array(g.nodes.data("active"))[:,1]
     #x = np.column_stack((degree_centrality,clustering_coeff,pagerank, core_num ))
     #x = np.column_stack((degree_centrality,eigen_centrality,pagerank,clustering_coeff, core_num, ci ))
     x = np.column_stack((degree_centrality,eigen_centrality,pagerank,ci))
+    #x = degree_centrality.reshape(-1,1)
     x = np.nan_to_num(x,nan = 0)
     return x
 
