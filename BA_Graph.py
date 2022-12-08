@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """DQN agents trained on Breakthrough by independent Q-learning."""
 from utils.environment.game import GraphGame
+from utils.environment.nodeCentrality import Node_Centrality
+from utils.environment.globalFeature import Global_Feature
 from utils.reinforcement_learning.rl_environment import Environment
 from utils.validation import get_Validation, area_under_curve
 from utils.environment.envhelper import gen_new_graphs
 from utils.reinforcement_learning.dqn_TS import DQN
 #from utils.reinforcement_learning.dqn import DQN
-from utils.params import Params
+from utils.hyperparameters.params import Params
 from tqdm import tqdm
 import torch
 import copy
@@ -16,7 +18,6 @@ from datetime import datetime
 
 import wandb
 import os
-os.environ['WANDB_MODE'] = 'online'
 os.environ['WANDB_NOTEBOOK_NAME'] = './Training_DiffSize_BA_Graph'
 wandb.login()
 
@@ -24,13 +25,15 @@ wandb.login()
 from datetime import timedelta
 from wandb import AlertLevel
 # Training parameters
-params = Params("./utils/ba_params.json")
+params = Params("./utils/hyperparameters/BA/ba_params_Gini.json")
 
 # WandB – Initialize a new run
 now = datetime.now()
 #wandb.init(entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=now.strftime("%d/%m/%Y %H:%M:%S"),config=params)
-wandb.init(entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=params.wandb_name,config=params)
+wandb.init(mode ="online",entity="bhandk", project="Attack_and_Defense_Same_Graph_Type",name=params.wandb_name,config=params)
 wandb.watch_called = False # Re-run the model without restarting the runtime, unnecessary after our next release
+nodeCentrality = Node_Centrality(params.centrality_feature_name)
+globalFeature = Global_Feature(params.global_feature_name)
 
 def Generate_Batch_Graph(size,seed = None):
     Batch_Graph = [gen_new_graphs(graph_type=['barabasi_albert'],seed=seed+i) for i in range(size)]
@@ -42,7 +45,6 @@ def main(agent=None):
     env = Environment(game)
     size_CV = params.validation_test_size
     CV_AUC = []
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if agent == None:
         agent = DQN(
                 state_representation_size=params.centrality_features,
@@ -66,7 +68,7 @@ def main(agent=None):
     for ep in tqdm(range(int(params.num_train_episodes))):
         if (ep) % params.graph_suffle == 0:
             Batch_Graph = Generate_Batch_Graph(graph_batch_size,seed=ep)
-        time_step = env.reset(Batch_Graph[int(ep%graph_batch_size)].copy())
+        time_step = env.reset(Batch_Graph[int(ep%graph_batch_size)].copy(),nodeCentrality,globalFeature)
         #time_step = env.reset(gen_new_graphs())
         while not time_step.last():
             action, prob = agent.step(time_step)
@@ -78,7 +80,7 @@ def main(agent=None):
         if (ep + 1) % params.eval_every == 0:
             AUC = []
             for i in range(size_CV):
-                eval_step = env.reset(evaluation[i].copy())
+                eval_step = env.reset(evaluation[i].copy(),nodeCentrality,globalFeature)
                 while not eval_step.last():
                     eval_output, prob = agent.step(eval_step, is_evaluation=True)
                     eval_step = env.step(eval_output)

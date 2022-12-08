@@ -63,21 +63,9 @@ class Environment(object):
                game,
                discount=1.0):
     """Constructor.
-
     Args:
-      game: [string, pyspiel.Game] Open Spiel game name or game instance.
+      game: Network Dismantling Game
       discount: float, discount used in non-initial steps. Defaults to 1.0.
-      chance_event_sampler: optional object with `sample_external_events` method
-        to sample chance events.
-      observation_type: what kind of observation to use. If not specified, will
-        default to INFORMATION_STATE unless the game doesn't provide it.
-      include_full_state: whether or not to include the full serialized
-        OpenSpiel state in the observations (sometimes useful for debugging).
-      distribution: the distribution over states if the game is a mean field
-        game.
-      mfg_population: The Mean Field Game population to consider.
-      enable_legality_check: Check the legality of the move before stepping.
-      **kwargs: dict, additional settings passed to the Open Spiel game.
     """
     self._game = game
     self._state = None
@@ -151,7 +139,7 @@ class Environment(object):
 
     return self.get_time_step()
 
-  def reset(self, Graph):
+  def reset(self, Graph, nodeFeature, globalFeature):
     """Starts a new sequence and returns the first `TimeStep` of this sequence.
 
     Returns:
@@ -165,7 +153,7 @@ class Environment(object):
         step_type: A `StepType` value.
     """
     self._should_reset = False
-    self._state = self._game.new_initial_state(Graph)
+    self._state = self._game.new_initial_state(Graph,nodeFeature,globalFeature)
 
     observations = {}
     observations["info_state"]=self._state.info_state

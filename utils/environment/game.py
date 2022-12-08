@@ -33,23 +33,27 @@ from  utils.environment.envhelper import*
 class GraphGame():
   """A Python version of the Graph game."""
 
-  def __init__(self,Graph):
+  def __init__(self,Graph, centralityFeature, globalFeature):
     self.Graph = Graph
+    self.centralityFeature =  centralityFeature
+    self.globalFeature = globalFeature  
 
-  def new_initial_state(Graph):
+  def new_initial_state(Graph,centralityFeature, globalFeature):
     """Returns a state corresponding to the start of a game."""
-    return GraphState(Graph)
+    return GraphState(Graph,centralityFeature, globalFeature)
 
 
 
 class GraphState():
   """A python version of the Tic-Tac-Toe state."""
-  def __init__(self, Graph):
+  def __init__(self, Graph,centralityFeature, globalFeature):
     self._is_terminal = False
     self.Graph = Graph
+    self.centralityFeature = centralityFeature
+    self.globalFeature = globalFeature
     self.num_nodes = self.Graph.vcount()
-    self.info_state =  from_igraph(self.Graph)
-    self.global_feature = global_feature(self.Graph)
+    self.info_state =  from_igraph(self.centralityFeature,self.Graph)
+    self.global_feature = self.globalFeature.get_global_features(self.Graph)
     self._reward = 0
     self._returns = 0
     self.lcc = [get_lcc(self.Graph)]
@@ -73,8 +77,8 @@ class GraphState():
     ebunch = self.Graph.incident(attack_node)
     self.Graph.delete_edges(ebunch)
     cond, l = network_dismantle(self.Graph, self.lcc[0])
-    self.info_state =  from_igraph(self.Graph)
-    self.global_feature = global_feature(self.Graph)
+    self.info_state =  from_igraph(self.centralityFeature,self.Graph)
+    self.global_feature = self.globalFeature.get_global_features(self.Graph)
     beta = molloy_reed(self.Graph)
     if beta == 0:
       beta = self.beta[-1]
@@ -108,16 +112,11 @@ class GraphState():
     """String for debug purposes. No particular semantics are required."""
     return board_to_string(self.Graph)
 
-  def new_initial_state(self,Graph):
+  def new_initial_state(self,Graph,centralityFeature, globalFeature):
       self.Graph = Graph
-      self.info_state =  from_igraph(self.Graph)
-      self.global_feature = global_feature(self.Graph)
+      self.info_state =  from_igraph(centralityFeature,self.Graph)
+      self.global_feature = globalFeature.get_global_features(self.Graph)
       self.lcc = [get_lcc(self.Graph)]
       self.r = []
       self.alpha = (1-nx.density(self.Graph))
       self.beta = [molloy_reed(self.Graph)]
-
-
-
-GRAPH = gen_new_graphs(['erdos_renyi', 'powerlaw','small-world', 'barabasi_albert'],seed=0)
-#nx.write_adjlist(GRAPH, "/content/figure/Graph")

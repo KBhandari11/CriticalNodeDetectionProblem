@@ -1,9 +1,9 @@
 from  utils.environment.envhelper import*
 
 # Given an environment and an trained agent we implement the agent
-def EvaluateModel(env, trained_agent,GRAPH):
+def EvaluateModel(env,nodeCentrality,globalFeature,trained_agent,GRAPH):
     """Evaluates `trained_agents` against a new graph."""
-    time_step = env.reset(GRAPH)
+    time_step = env.reset(GRAPH,nodeCentrality,globalFeature)
     episode_rewards = []
     action_lists = []
     i = 0
