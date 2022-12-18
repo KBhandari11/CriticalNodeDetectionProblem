@@ -25,7 +25,7 @@ import os
 os.environ['WANDB_NOTEBOOK_NAME'] = './Training_DiffSize_Different_Graph'
 wandb.login()
 # DQN model hyper-parameters
-params = Params("./utils/hyperparameters/Mix/mixed_params_Gini.json")
+params = Params("./utils/hyperparameters/Mix/mixed_params_CN.json")
 
 #epsilon_decay_duration= int(2e6) if num_train_episodes == int(1e5) else int(2e7)
 # WandB – Initialize a new run

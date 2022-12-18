@@ -1,8 +1,8 @@
 {
     "architecture": "GAT and DQN",
     "dataset": "Synthetic Dataset:barabasi_albert ",
-    "centrality_feature_name":"Deg, PageRank,Eigen,CI",
-    "global_feature_name":"Hetero,Dens,Res,Gini,Entro,Transi",
+    "centrality_feature_name":["degree","eigen", "pagerank","ci"],
+    "global_feature_name":["heterogeneity","density", "resilience","gini","entropy","transitivity"],
     "wandb_name":"4centrality_6global",
     "centrality_features": 4,
     "global_features": 6,

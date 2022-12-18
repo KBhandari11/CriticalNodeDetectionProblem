@@ -25,7 +25,7 @@ wandb.login()
 from datetime import timedelta
 from wandb import AlertLevel
 # Training parameters
-params = Params("./utils/hyperparameters/BA/ba_params_Gini.json")
+params = Params("./utils/hyperparameters/BA/ba_params_CN.json")
 
 # WandB – Initialize a new run
 now = datetime.now()

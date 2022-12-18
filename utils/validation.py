@@ -25,6 +25,7 @@ def crossvalidation_data(graph_type=None,seed=None):
     return Cross_Graph, x
 
 def area_under_curve(number_nodes,lcc):
+    lcc = np.array(lcc) /lcc[0]
     return auc(number_nodes,lcc)
 
 def get_Validation(num, file_path=None,seed=None):

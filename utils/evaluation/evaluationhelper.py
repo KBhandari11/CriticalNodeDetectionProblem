@@ -34,9 +34,14 @@ def eval_network_dismantle(graph, init_lcc):
     largest_cc = get_lcc(graph)
     cond = True if (largest_cc/init_lcc) <= 0.01 else False
     return cond, largest_cc
-
 def EvaluateACTION(action_list,GRAPH):
     """Evaluates the env for given action_list"""
+    '''G = GRAPH.to_networkx()
+    mapping = {}
+    for i, j in zip(sorted(G), [sorted(G).index(i) for i in sorted(G)]):
+            mapping[i] = j
+    G = nx.relabel_nodes(G, mapping)
+    print(G.nodes())'''
     lcc = [get_lcc(GRAPH)]
     act = []
     for action in action_list:

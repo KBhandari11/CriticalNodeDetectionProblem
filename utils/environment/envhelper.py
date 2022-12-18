@@ -63,8 +63,9 @@ def get_lcc(G):
             found.update(connected)
             comps.append(connected)
 
-    return len(max(comps, key=len))   
-
+    #return len(max(comps, key=len))   
+    return sum(map((lambda x: len(x)*(len(x)-1)/2), comps))
+               
 def molloy_reed(g):
   all_degree = np.array(g.degree())
   degs = all_degree
