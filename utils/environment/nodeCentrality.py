@@ -16,18 +16,22 @@ class Node_Centrality():
             self.feature = ["degree","eigen","pagerank","ci"]
         else:
             self.feature = feature
+
     def get_centrality_features(self, G):
         centrality = {}
-        
         for f in self.feature:
             centrality[f] = getattr(self, 'case_' + f)(G)
         x = np.column_stack(centrality.values())
         x = np.nan_to_num(x,nan = 0)
         x = torch.from_numpy(x.astype(np.float32))
         return x
+
     def case_degree(self, g):
+        """Get degree value of each node for the Graph"""
         return np.array(g.degree()) / (g.vcount() - 1)
+
     def case_eigen(self, g):
+        """Get eigencentrality value of each node for the Graph"""
         try:
             eigen_centrality = np.array(g.eigenvector_centrality())
         except:
@@ -35,19 +39,26 @@ class Node_Centrality():
             #value = Graph.arpack_defaults.tol = int(10e-2)
             eigen_centrality = np.array(g.eigenvector_centrality())
         return eigen_centrality
+
     def case_pagerank(self, g):
+        """Get personalized pagerank value of each node for the Graph"""
         return np.array(g.personalized_pagerank())
+
     def case_ci(self, g):
+        """Get collective influence value of each node for the Graph"""
         return self.get_ci(g, 2)
-    def case_cluster_coeff(self):
-        return 
+
     def case_core(self, g):
+        """Get k core value of each node for the Graph"""
         G = g.to_networkx()
         return np.array(list(nx.core_number(G).values()))
+
     def case_active(self, g):
+        """Get active value of each node for the Graph"""
         return np.array(g.nodes.data("active"))[:,1]
     
     def get_Ball(self,g,v,l,n):
+        """Get Ball value of a node'v', within length 'l' with neighbour of 'n'"""
         if l == 1:
             return [v]
         else:
@@ -63,7 +74,9 @@ class Node_Centrality():
                 return list(set(n)-set([v]))
             else:
                 return n
+                
     def get_ci(self,g, l):
+        """Compute the Collective Influence of the Graph."""
         ci = []
         degs = np.array(g.degree())
         #G_nx = g.to_networkx()

@@ -1,9 +1,16 @@
 from  utils.environment.envhelper import*
 
+def input_graph(graph_path,file):
+    GRAPH = Graph.Read_Ncol(graph_path+str(file)+".txt", directed=False)
+    nodes = [v.index for v in GRAPH.vs]
+    map = {n:int(i) for i, n in enumerate(nodes)}
+    GRAPH = reset(GRAPH)  
+    Graph.simplify(GRAPH)
+    return GRAPH, map
 # Given an environment and an trained agent we implement the agent
-def EvaluateModel(env,nodeCentrality,globalFeature,trained_agent,GRAPH):
+def EvaluateModel(env,objectiveFunction,nodeCentrality,globalFeature,trained_agent,GRAPH):
     """Evaluates `trained_agents` against a new graph."""
-    time_step = env.reset(GRAPH,nodeCentrality,globalFeature)
+    time_step = env.reset(GRAPH,objectiveFunction,nodeCentrality,globalFeature)
     episode_rewards = []
     action_lists = []
     i = 0
@@ -13,8 +20,8 @@ def EvaluateModel(env,nodeCentrality,globalFeature,trained_agent,GRAPH):
         time_step = env.step(agent_output)
         i+=1
         episode_rewards.append(env.get_state._rewards)
-    lcc = env.get_state.lcc
-    return episode_rewards, lcc, action_lists
+    reward1 = env.get_state.reward1
+    return episode_rewards, reward1, action_lists
 
 # Given an environmnet with all action in  a list 
 '''def EvaluateACTION(env, action_list,GRAPH):
@@ -30,11 +37,18 @@ def EvaluateModel(env,nodeCentrality,globalFeature,trained_agent,GRAPH):
             break
     lcc = env.get_state.lcc
     return episode_rewards, lcc, action_list[:len(lcc)]'''
-def eval_network_dismantle(graph, init_lcc):
-    largest_cc = get_lcc(graph)
-    cond = True if (largest_cc/init_lcc) <= 0.01 else False
-    return cond, largest_cc
-def EvaluateACTION(action_list,GRAPH):
+def eval_network_dismantle(board,objectiveFunction, init_gamma):
+    """Check if the current state of the graph meets the criteria:
+            - Number of active node <= 2
+            - Number of edges  <= 2
+            - Fraction of the objective function is 1%.   
+    """
+    all_nodes = np.array(board.vs["active"])
+    gamma = objectiveFunction(board)
+    cond = True if (gamma/init_gamma) <= 0.01 else False
+    return cond, gamma
+
+def EvaluateACTION(action_list,objectiveFunction,GRAPH):
     """Evaluates the env for given action_list"""
     '''G = GRAPH.to_networkx()
     mapping = {}
@@ -42,14 +56,14 @@ def EvaluateACTION(action_list,GRAPH):
             mapping[i] = j
     G = nx.relabel_nodes(G, mapping)
     print(G.nodes())'''
-    lcc = [get_lcc(GRAPH)]
-    act = []
+    gammaList = [objectiveFunction(GRAPH)]
+    actionList = []
     for action in action_list:
         ebunch = GRAPH.incident(GRAPH.vs.find(name=str(action)))
         GRAPH.delete_edges(ebunch)
-        cond, l = eval_network_dismantle(GRAPH, lcc[0])
-        lcc.append(l)
-        act.append(action)
+        cond, gamma = eval_network_dismantle(GRAPH,objectiveFunction, gammaList[0])
+        gammaList.append(gamma)
+        actionList.append(action)
         if cond:
             break
-    return None, lcc[0:GRAPH.vcount()], act
+    return None, gammaList[0:GRAPH.vcount()], actionList

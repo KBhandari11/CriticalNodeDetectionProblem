@@ -139,7 +139,7 @@ class Environment(object):
 
     return self.get_time_step()
 
-  def reset(self, Graph, nodeFeature, globalFeature):
+  def reset(self, Graph, objectiveFunction,nodeFeature, globalFeature):
     """Starts a new sequence and returns the first `TimeStep` of this sequence.
 
     Returns:
@@ -153,7 +153,7 @@ class Environment(object):
         step_type: A `StepType` value.
     """
     self._should_reset = False
-    self._state = self._game.new_initial_state(Graph,nodeFeature,globalFeature)
+    self._state = self._game.new_initial_state(Graph,objectiveFunction,nodeFeature,globalFeature)
 
     observations = {}
     observations["info_state"]=self._state.info_state

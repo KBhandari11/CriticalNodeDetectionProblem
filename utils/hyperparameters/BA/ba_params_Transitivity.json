@@ -1,7 +1,12 @@
 {
     "architecture": "GAT and DQN",
-    "dataset": "Synthetic Dataset:barabasi_albert ",
+    "graph_type": ["barabasi_albert"],
+    "wandb_project": "Synthetic Dataset:barabasi_albert ",
+    "wandb_notebook_name": "./Training_DiffSize_BA_Graph" ,
+    "wandb_mode": "online",
     "centrality_feature_name":["degree","eigen", "pagerank","ci"],
+    "GNN": ["utils/reinforcement_learning/GraphNN.py","GraphNN"],
+    "objective_function": "largestConnectedComponent",
     "global_feature_name":["transitivity"],
     "wandb_name":"4centrality_1global",
     "centrality_features": 4,

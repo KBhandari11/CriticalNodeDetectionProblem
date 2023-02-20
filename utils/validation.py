@@ -24,9 +24,13 @@ def crossvalidation_data(graph_type=None,seed=None):
     x  =  np.flip(np.arange(NUM)[NUM:0:-1]/NUM)
     return Cross_Graph, x
 
-def area_under_curve(number_nodes,lcc):
-    lcc = np.array(lcc) /lcc[0]
-    return auc(number_nodes,lcc)
+def area_under_curve(condMaxNum,N,number_nodes,value):
+    value = np.array(value)
+    if condMaxNum:
+        value = ((N-value)/N)
+    else:
+        value = value/value[0]
+    return auc(number_nodes,value)
 
 def get_Validation(num, file_path=None,seed=None):
     evaluation = []
@@ -40,7 +44,7 @@ def get_Validation(num, file_path=None,seed=None):
                 x.append(iteration)
     else:
         for i in range(num):
-            graph, iteration =  crossvalidation_data(['erdos_renyi','barabasi_albert'],seed=seed)
+            graph, iteration =  crossvalidation_data(['erdos_renyi', 'powerlaw','small-world', 'barabasi_albert'],seed=seed)
             evaluation.append(graph)
             x.append(iteration)
     return evaluation, x    
