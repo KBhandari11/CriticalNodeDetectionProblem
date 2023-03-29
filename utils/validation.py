@@ -27,7 +27,7 @@ def crossvalidation_data(graph_type=None,seed=None):
 def area_under_curve(condMaxNum,N,number_nodes,value):
     value = np.array(value)
     if condMaxNum:
-        value = ((N-value)/N)
+        value = ((value[-1]-value+1)/value[-1])
     else:
         value = value/value[0]
     return auc(number_nodes,value)

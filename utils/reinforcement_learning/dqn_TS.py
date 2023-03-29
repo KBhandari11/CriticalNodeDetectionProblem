@@ -222,12 +222,12 @@ class DQN(AbstractAgent):
       best_value = torch.index_select(info_state.x, 1, index)
       legal_best_value = best_value[legal_actions]
       action = legal_actions[torch.argmax(legal_best_value)]
-      probs[action] = 1.0
+      probs = best_value
     else:
       q_values = self._q_network(info_state.x,info_state.edge_index,global_feature).detach()
       legal_q_values = q_values[legal_actions]
       action = legal_actions[torch.argmax(legal_q_values)]
-      probs[action] = 1.0
+      probs = q_values.detach().cpu().numpy().flatten(order='C')
     return action, probs
 
   def _get_epsilon(self, is_evaluation, power=1.0):

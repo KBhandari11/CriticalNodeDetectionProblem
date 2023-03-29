@@ -21,7 +21,7 @@ class Node_Centrality():
         centrality = {}
         for f in self.feature:
             centrality[f] = getattr(self, 'case_' + f)(G)
-        x = np.column_stack(centrality.values())
+        x = np.column_stack(list(centrality.values()))
         x = np.nan_to_num(x,nan = 0)
         x = torch.from_numpy(x.astype(np.float32))
         return x
@@ -57,7 +57,7 @@ class Node_Centrality():
         """Get active value of each node for the Graph"""
         return np.array(g.nodes.data("active"))[:,1]
     
-    def get_Ball(self,g,v,l,n):
+    '''def get_Ball(self,g,v,l,n):
         """Get Ball value of a node'v', within length 'l' with neighbour of 'n'"""
         if l == 1:
             return [v]
@@ -73,15 +73,27 @@ class Node_Centrality():
             if v in n:
                 return list(set(n)-set([v]))
             else:
-                return n
-                
+                return n'''
+    def get_Ball(self,g,v,n):
+        for i in g.neighbors(v):
+            if not(i in n):
+                n.append(i)
+            for j in g.neighbors(i):
+                if not(j in n):
+                    n.append(j)
+        return n
+            
+            
     def get_ci(self,g, l):
         """Compute the Collective Influence of the Graph."""
         ci = []
         degs = np.array(g.degree())
         #G_nx = g.to_networkx()
-        for i in g.vs.indices:
-            n = self.get_Ball(g,i,l,[i]) #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
+        for i in g.vs.indices:            
+            #n = self.get_Ball(g,i,l,[i]) 
+            n = self.get_Ball(g,i,[i]) 
+            #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
+            #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
             #print("path",n)
             #print("ball",get_Ball(g,i,l,[i]))
             #print("networkx",list(nx.single_source_shortest_path(G_nx,i,l))[0:])

@@ -118,7 +118,7 @@ class BenchMark():
         wandb.config.update({'best_dir':self.best_dir})
         wandb.finish() 
 
-    def evaluation(self, graphpath, bestModel):
+    def evaluation(self, graphpath, bestModel=None, useSingleStep= False):
         """
         Given a path to an edgelist of the Graph and a model, it evaluates the removal of node based on the objective function. 
         """
@@ -126,8 +126,10 @@ class BenchMark():
             condMaxNum = True
         else:
             condMaxNum = False
-        G , _ = input_graph(graphpath)
-        model = torch.load(bestModel)
+        G , _ = self.input_graph(graphpath)
+        if bestModel == None:
+            bestModel = self.best_dir 
+        model = torch.load(self.params.checkpoint_dir+"_"+bestModel)
         N = G.vcount()
         game = GraphGame
         env = Environment(game)
@@ -136,13 +138,13 @@ class BenchMark():
                            global_feature_size = self.params.global_features)
         attacker._q_network.load_state_dict(model["_q_network"])
         attacker._optimizer.load_state_dict(model["_optimizer"])
-        rewards, value, actions = EvaluateModel(env, self.objectiveFunction, self.nodeCentrality, self.globalFeature, attacker, G)
+        rewards, value, actions = EvaluateModel(env, self.objectiveFunction, self.nodeCentrality, self.globalFeature, attacker, G,useSingleStep)
         x =  np.flip(np.arange(N)[N:0:-1]/N)
         auc = area_under_curve(condMaxNum,N,x[:len(value)],value)
         fraction = len(actions)/N
         return auc, fraction
     
-    def evaluationOthers(self, graphpath, actionspath):
+    def evaluationOthers(self, graphpath, actionspath, useIndex =False):
         """
         Given a path to an edgelist of a Graph, the list of action sequences, "actions" in order, and an objectiveFunction it evaluates the removal of node based on the objective function. 
         """
@@ -151,21 +153,29 @@ class BenchMark():
             condMaxNum = True
         else:
             condMaxNum = False
-            
         G , _ = self.input_graph(graphpath)
         N = G.vcount()
         fname = actionspath+graphpath.split("/")[-1]
-        with warnings.catch_warnings():
-            warnings.simplefilter("Ignore")
-            actions = np.loadtxt(fname, dtype=int, unpack=True)
-        rewards, value, actions = EvaluateACTION(actions,self.objectiveFunction,G)
-        x =  np.flip(np.arange(N)[N:0:-1]/N)
-        value = np.array(value)/value[0]
-        auc = area_under_curve(condMaxNum,N,x[:len(value)],value)
-        fraction = len(actions)/N
-        return auc, fraction
+        if os.path.exists(fname):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                actions = np.loadtxt(fname, dtype=int, unpack=True)
+            if len(actions)!= 0 :
+                rewards, value, actions = EvaluateACTION(actions,self.objectiveFunction,G, useIndex)
+                if condMaxNum:
+                    x =  np.flip(np.arange(N+1)[N:0:-1]/N)
+                else:
+                    x =  np.flip(np.arange(N+1)[N:0:-1]/N)
+                value = np.array(value)/value[0]
+                auc = area_under_curve(condMaxNum,N,x[:len(value)],value)
+                fraction = len(actions)/N
+                return auc, fraction
+            else:
+                return None, None
+        else:
+            return None,None
 
-    def compareBenchmarkSynthetic(self,evaluation,bestmodel):
+    def compareBenchmarkSynthetic(self,evaluation,bestmodel, useIndex = False):
         """
         Evaluate Graph on Synthetic Graph. 
         """
@@ -185,21 +195,19 @@ class BenchMark():
             graphlist = os.listdir(syntheticGraph[folder]) 
             for graphname in graphlist:
                 name = graphname.split("_")[0]
-                try:
-                    graphpath = syntheticGraph[folder] + graphname
-                    auc, fraction = evaluation(graphpath, bestmodel)
-                    result[folder][name]["auc"].append(auc)
-                    result[folder][name]["fraction"].append(fraction)
-                except:
-                    pass
+                graphpath = syntheticGraph[folder] + graphname
+                value = evaluation(graphpath,bestmodel,useIndex = useIndex)
+                if value[0] != None:
+                    result[folder][name]["auc"].append(value[0])
+                    result[folder][name]["fraction"].append(value[1])
         self.result_Syn = result
         
-    def compareBenchmarkSyntheticMotif(self,evaluation,bestmodel):
+    def compareBenchmarkSyntheticMotif(self,evaluation,bestmodel, useIndex = False):
         """
         Evaluate Graph on Synthetic Graph with Motifs attached. 
         """
-        syntheticMotifGraph = {"BA":"./Dataset/Validation/Motifs_Attached/BA/",
-                    "Tree":"./Dataset/Validation/Motifs_Attached/Tree/", 
+        syntheticMotifGraph = {"BA":"./Dataset/Motifs_Attached/New_BA/",
+                    "Tree":"./Dataset/Motifs_Attached/New_Tree/", 
                    }
         result = {"BA": { "cycle" : {"auc": [], "fraction": []},
                                   "clique" : {"auc": [], "fraction": []},
@@ -223,18 +231,17 @@ class BenchMark():
             #graphlist.remove(".ipynb_checkpoints")
             for graphname in graphlist:
                 name = graphname.split("_")[3]
-                try:
-                    graphpath = syntheticMotifGraph[folder] + graphname
-                    auc, fraction = evaluation(graphpath,bestmodel)
-                    result[folder][name]["auc"].append(auc)
-                    result[folder][name]["fraction"].append(fraction)
-                except:
-                    pass
-            '''for graph in result[folder]:
-                for measure in result[folder][graph]:
-                    plt.plot(result[folder][graph][measure])
-                    plt.title(folder+" :"+measure)
-                    plt.show()'''
+                graphpath = syntheticMotifGraph[folder] + graphname
+                if os.path.exists(graphpath):
+                    value = evaluation(graphpath,bestmodel,useIndex = useIndex)
+                    if value[0] != None:
+                        result[folder][name]["auc"].append(value[0])
+                        result[folder][name]["fraction"].append(value[1])
+                '''for graph in result[folder]:
+                    for measure in result[folder][graph]:
+                        plt.plot(result[folder][graph][measure])
+                        plt.title(folder+" :"+measure)
+                        plt.show()'''
         self.result_SynMotif = result
 
 
