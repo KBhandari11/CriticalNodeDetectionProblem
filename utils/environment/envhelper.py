@@ -30,14 +30,14 @@ def gen_graph(cur_n, g_type,seed=None):
         g = Graph.GSG(n=cur_n, radius=random.uniform(0.1,0.4),directed=False)
     g.vs['name'] = range(cur_n)'''
     if g_type == 'erdos_renyi':
-        g = Graph.Erdos_Renyi(n=cur_n, p=random.uniform(0.005,0.15), directed=False)
+        g = Graph.Erdos_Renyi(n=cur_n, p=random.uniform(0.05,0.20), directed=False)
     elif g_type == 'powerlaw':
-        g = nx.powerlaw_cluster_graph(n=cur_n, m=random.randint(2,8), p=random.uniform(0.01,0.15),seed = seed)
+        g = nx.powerlaw_cluster_graph(n=cur_n, m=random.randint(2,10), p=random.uniform(0.01,0.15),seed = seed)
         g = Graph.from_networkx(g)
     elif g_type == 'small-world':
         g = Graph.Watts_Strogatz(dim =1 ,size=cur_n, nei=random.randint(2,10), p=random.uniform(0.05,0.2))
     elif g_type == 'barabasi_albert':
-        g = Graph.Barabasi(n=cur_n, m=random.randint(2,8),directed=False)
+        g = Graph.Barabasi(n=cur_n, m=random.randint(2,10),directed=False)
     elif g_type == 'geometric':
         g = Graph.GSG(n=cur_n, radius=random.uniform(0.1,0.4),directed=False)
     g.vs['name'] = range(cur_n)

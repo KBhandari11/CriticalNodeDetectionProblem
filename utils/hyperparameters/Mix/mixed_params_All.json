@@ -30,5 +30,6 @@
     "epsilon_start":1.0,
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
+    "best_model": 85000,
     "checkpoint_dir": "./model/TS/4centrality_6global_All/Mix_Graph/model_differentGraph"
 }

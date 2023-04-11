@@ -1,7 +1,7 @@
 {
     "architecture": "GAT and DQN",
     "graph_type": ["barabasi_albert"],
-    "wandb_project": "Synthetic Dataset:barabasi_albert ",
+    "wandb_project": "Synthetic Dataset barabasi_albert ",
     "wandb_notebook_name": "./Training_DiffSize_BA_Graph" ,
     "wandb_name":"4centrality_3global",
     "wandb_mode": "online",
@@ -16,7 +16,7 @@
     "eval_every":500,
     "graph_batch_size":1000,
     "graph_suffle": 1e3,      
-    "validation_test_size":2,
+    "validation_test_size":50,
     "hidden_layers":[[5,3],[2,3],[2,2,1]],
     "replay_buffer_capacity":1e5,
     "batch_size":32,
@@ -30,5 +30,6 @@
     "epsilon_start":1.0,
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
+    "best_model": 66500 ,
     "checkpoint_dir": "./model/TS/Best/MinMax/BA_Graph/model_BAGraph"
 }
