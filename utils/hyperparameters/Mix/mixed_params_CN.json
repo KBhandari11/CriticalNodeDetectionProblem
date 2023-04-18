@@ -30,5 +30,5 @@
     "epsilon_start":1.0,
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
-    "checkpoint_dir": "./model/TS/pairwise_connectivity/Mix_Graph/model_differentGraph"
+    "checkpoint_dir": "./model/TS/CNP/Best/Mix_Graph/model_differentGraph"
 }
