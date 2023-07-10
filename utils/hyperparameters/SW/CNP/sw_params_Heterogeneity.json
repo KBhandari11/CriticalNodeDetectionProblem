@@ -1,7 +1,7 @@
 {
     "architecture": "GAT and DQN",
     "graph_type": ["small-world"],
-    "wandb_project": "Synthetic Dataset:small-world ",
+    "wandb_project": "Training_DiffSize_SW_Graph_Type",
     "wandb_notebook_name": "./Training_DiffSize_SW_Graph" ,
     "wandb_name":"4centrality_1global",
     "wandb_mode": "online",
@@ -30,5 +30,5 @@
     "epsilon_start":1.0,
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
-    "checkpoint_dir": "./model/TS/4centrality_1global_Heterogeneity/SW_Graph/model_SWGraph"
+    "checkpoint_dir": "./model/TS/CNP/4centrality_1global_Heterogeneity/SW_Graph/model_SWGraph"
 }

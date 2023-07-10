@@ -1,7 +1,7 @@
 {
     "architecture": "GAT and DQN",
     "graph_type": ["small-world"],
-    "wandb_project": "Synthetic Dataset small-world ",
+    "wandb_project": "Training_DiffSize_SW_Graph_Type",
     "wandb_notebook_name": "./Training_DiffSize_SW_Graph" ,
     "wandb_mode": "online",
     "centrality_feature_name":["degree","eigen", "pagerank","ci"],

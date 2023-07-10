@@ -1,6 +1,6 @@
 {"architecture": "GAT and DQN",
     "graph_type": ["erdos_renyi","powerlaw","small-world","barabasi_albert"],
-    "wandb_project": "Synthetic Dataset:erdos_renyi,powerlaw,small-world,barabasi_albert ",
+    "wandb_project": "Attack_and_Defense_Mix_Graph_Type",
     "wandb_notebook_name": "./Training_DiffSize_Different_Graph" ,
     "wandb_mode": "online",
     "centrality_feature_name":["degree","eigen", "pagerank","ci"],
