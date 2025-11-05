@@ -1,6 +1,5 @@
 """ A Python environment to simulate node removal on graph for the Critical Node Detection Problem."""
 import numpy as np
-import networkx as nx
 from torch_geometric import utils
 from  utils.environment.envhelper import*
 

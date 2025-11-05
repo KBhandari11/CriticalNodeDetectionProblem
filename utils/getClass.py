@@ -7,7 +7,6 @@ def get_class_from_file(filepath: str, class_name: str):
 
     # Get the class from the module
     class_ = getattr(module, class_name)
-   
     return class_
 
 def objective_function(filepath: str, objective_function: str):

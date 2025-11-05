@@ -2,14 +2,15 @@ import torch
 from torch import nn
 from torch_geometric import nn as gnn
 from torch.nn import functional as F
-from torch_geometric.nn import GATv2Conv
+from torch_geometric.nn import GATv2Conv,SAGEConv,GCNConv
 
 class GraphNN(nn.Module):
   """A simple network built from nn.linear layers."""
 
-  def __init__(self,
+  def __init__(self, 
                feature_size,
-               hidden_sizes,global_size):
+               hidden_sizes,global_size,
+               gnn_type="GAT"):
     """GNN.
     Args:
       feature_size: (int) number of centrality features
@@ -23,9 +24,20 @@ class GraphNN(nn.Module):
     hidden_conv, hidden_global, hidden_final = hidden_sizes[0], hidden_sizes[1], hidden_sizes[2]
     
     #2 GAT layer
-    self.conv1 = GATv2Conv(feature_size, hidden_conv[0],add_self_loops = True) 
+    if gnn_type == "GAT": 
+      self.conv1 = GATv2Conv(feature_size, hidden_conv[0], add_self_loops = True)
+    elif gnn_type == "SAGEConv": 
+      self.conv1 = SAGEConv(feature_size, hidden_conv[0])
+    elif gnn_type == "GCNConv": 
+      self.conv1 = GCNConv(feature_size, hidden_conv[0], add_self_loops = True) 
     self.conv1bn = gnn.BatchNorm(hidden_conv[0])
-    self.conv2 = GATv2Conv(hidden_conv[0],hidden_conv[1],add_self_loops = True) 
+    
+    if gnn_type == "GAT": 
+      self.conv2 = GATv2Conv(hidden_conv[0], hidden_conv[1], add_self_loops = True) 
+    elif gnn_type == "SAGEConv": 
+      self.conv2 = SAGEConv(hidden_conv[0], hidden_conv[1]) 
+    elif gnn_type == "GCNConv": 
+      self.conv2 = GCNConv(hidden_conv[0], hidden_conv[1], add_self_loops = False) 
     self.conv2bn = gnn.BatchNorm(hidden_conv[1])
     
     #Global_Linear Layer
@@ -39,6 +51,7 @@ class GraphNN(nn.Module):
       self.linear1 = nn.Linear(hidden_conv[-1]+hidden_global[-1],hidden_final[0])
     else:
       self.linear1 = nn.Linear(hidden_conv[-1],hidden_final[0])
+
     self.batchnorm1 = nn.BatchNorm1d(hidden_final[0])
     self.linear2 = nn.Linear(hidden_final[0], hidden_final[1])
     self.batchnorm2 = nn.BatchNorm1d(hidden_final[1])
@@ -46,8 +59,7 @@ class GraphNN(nn.Module):
   
   def forward(self, node_feature, edge_index, global_x):
         
-    x, edge_index,global_x = node_feature.to(self.device), edge_index.to(self.device),global_x.to(self.device)
-
+    x, edge_index,global_x = node_feature.to(self.device), edge_index.to(torch.int64).to(self.device),global_x.to(self.device)
     #MLP for Global Features
     if self.global_size != 0:
       global_x = self.linear_global1(global_x)

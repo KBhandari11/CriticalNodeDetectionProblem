@@ -1,17 +1,3 @@
-# Copyright 2019 DeepMind Technologies Limited
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """DQN agent implemented in PyTorch."""
 
 import collections
@@ -37,8 +23,8 @@ class DQN(AbstractAgent):
   def __init__(self,
                state_representation_size,
                global_feature_size,
+               gnn_model="GAT",
                hidden_layers_sizes=[[4,3],[5,3],[6,4,3]],
-               output_layer_size =1,
                replay_buffer_capacity=10000,
                batch_size=128,
                replay_buffer_class=ReplayBuffer,
@@ -84,9 +70,9 @@ class DQN(AbstractAgent):
     self._last_loss_value = None
 
     # Create the Q-network instances
-    self._q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size).to(self.device) #num_actions
+    self._q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size,gnn_type=gnn_model).to(self.device) #num_actions
 
-    self._target_q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size).to(self.device)
+    self._target_q_network = GraphNN(state_representation_size, self._layer_sizes,self.global_feature_size,gnn_type=gnn_model).to(self.device)
     # Q network outputs approx single feature embedded value = approx q value for each Noder
     if loss_str == "mse":
       self.loss_class = F.mse_loss
@@ -270,14 +256,27 @@ class DQN(AbstractAgent):
     for t in transitions:
         info_states = t.info_state
         global_feature = t.global_feature
+        next_info_states = t.next_info_state 
+        next_global_feature = t.next_global_feature
+
         q_values.append(torch.flatten(self._q_network(info_states.x,info_states.edge_index,global_feature)))
         actions.append(t.action)
         rewards.append(t.reward)
-        next_info_states = t.next_info_state 
-        next_global_feature = t.next_global_feature
-        target_q_values.append(torch.flatten(self._target_q_network(next_info_states.x,next_info_states.edge_index,next_global_feature)))
         are_final_steps.append(t.is_final_step)
-        max_next_q.append(self.max_next_q_value(target_q_values[-1].detach(),t.legal_actions_mask))
+
+        illegal_actions   = 1 - t.legal_actions_mask
+        q_next_online = torch.flatten(self._q_network(next_info_states.x,next_info_states.edge_index,next_global_feature)).detach()
+
+        illegal_penalty   = illegal_actions * ILLEGAL_ACTION_LOGITS_PENALTY
+        q_next_online_masked = q_next_online + torch.tensor(illegal_penalty,device=self.device)      
+        next_best_action = torch.argmax(q_next_online_masked)  
+        q_next_target = torch.flatten(self._target_q_network(next_info_states.x,next_info_states.edge_index,next_global_feature)).detach()
+        max_next_q.append(q_next_target[next_best_action])
+
+        #target_q_values.append(torch.flatten(self._target_q_network(next_info_states.x,next_info_states.edge_index,next_global_feature)))
+        #max_next_q.append(self.max_next_q_value(target_q_values[-1].detach(),t.legal_actions_mask))
+
+
     actions = torch.LongTensor(actions)
     rewards = torch.Tensor(rewards)
     are_final_steps = torch.Tensor(are_final_steps)
@@ -288,8 +287,13 @@ class DQN(AbstractAgent):
     prediction=[]
     nstep_gamma = (self._discount_factor**self.n_steps)
     for i in range(self._batch_size):
-        target.append((rewards[i] + (1 - are_final_steps[i]) * nstep_gamma * max_next_q[i]))
-        prediction.append(self._q_values[i][actions[i].item()])
+        #target.append((rewards[i] + (1 - are_final_steps[i]) * nstep_gamma * max_next_q[i]))
+        #prediction.append(self._q_values[i][actions[i].item()])
+        target_val     = rewards[i] + (1 - are_final_steps[i]) * nstep_gamma * max_next_q[i]
+        prediction_val = self._q_values[i][actions[i].item()]
+        target.append(target_val)
+        prediction.append(prediction_val)
+
     target = torch.stack(target).to(self.device)
     prediction = torch.stack(prediction)
     loss = self.loss_class(prediction, target)

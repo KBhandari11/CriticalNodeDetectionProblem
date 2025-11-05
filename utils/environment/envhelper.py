@@ -37,7 +37,7 @@ def gen_graph(cur_n, g_type,seed=None):
     elif g_type == 'small-world':
         g = Graph.Watts_Strogatz(dim =1 ,size=cur_n, nei=random.randint(2,10), p=random.uniform(0.05,0.2))
     elif g_type == 'barabasi_albert':
-        g = Graph.Barabasi(n=cur_n, m=random.randint(2,10),directed=False)
+        g = Graph.Barabasi(n=cur_n, m=random.randint(1,10),directed=False)
     elif g_type == 'geometric':
         g = Graph.GSG(n=cur_n, radius=random.uniform(0.1,0.4),directed=False)
     g.vs['name'] = range(cur_n)
@@ -109,7 +109,7 @@ def reduceddegree(g):
     """
     x = torch.FloatTensor(g.degree()).reshape((-1, 1)) - 1
     return x
-
+'''
 def network_dismantle(board,objectiveFunction, init_gamma):
     """Check if the current state of the graph meets the criteria:
             - Number of active node <= 2
@@ -126,6 +126,56 @@ def network_dismantle(board,objectiveFunction, init_gamma):
     else:
         #cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (gamma/init_gamma) <= 0.01 else False
         cond = True if len(active_nodes) <= 2 or board.ecount() <= 2  or (gamma/init_gamma) <= 0.001 else False
+
+    return cond, gamma
+'''
+def network_dismantle(board,objectiveFunction, init_gamma,active_mask=None):
+    """Check if the current state of the graph meets the criteria:
+            - Number of active node <= 2
+            - Number of edges  <= 2
+            - Fraction of the objective function is 1%.   
+    """
+    if active_mask is None:                       # legacy path
+        all_nodes     = np.asarray(board.vs["active"], dtype=bool)
+        active_nodes  = np.flatnonzero(all_nodes)
+    else:                                         # fast path
+        active_nodes  = np.flatnonzero(active_mask)
+
+    # Short-circuit: if ≤ 2 nodes are left we can decide immediately
+    if active_nodes.size <= 2:
+        # We still need γ for the reward calculation
+        gamma = objectiveFunction(board) if active_mask is None else 0.0
+        return True, gamma
+
+    # ------------------------------------------------------------------
+    # 2. Build a *temporary* sub-graph only if we got the mask
+    # ------------------------------------------------------------------
+    if active_mask is None:
+        # Original behaviour: evaluate on the full (mutated) graph
+        gamma      = objectiveFunction(board)
+        edge_count = board.ecount()
+    else:
+        # New, faster behaviour: evaluate on the induced sub-graph
+        subg       = board.subgraph(
+                        active_nodes,
+                        #vertex_attrs=board.vertex_attributes(),
+                        #edge_attrs=board.edge_attributes()
+                     )
+        gamma      = objectiveFunction(subg)
+        edge_count = subg.ecount()
+
+    # ------------------------------------------------------------------
+    # 3. Stopping condition  (unchanged thresholds, just faster counts)
+    # ------------------------------------------------------------------
+    if objectiveFunction.__name__ == "numberConnectedComponent":
+        init_gamma = board.vcount()               # same as before
+        cond = (active_nodes.size <= 2
+                or edge_count      <= 2
+                or ((init_gamma - gamma + 1) / init_gamma) <= 0.001)
+    else:
+        cond = (active_nodes.size <= 2
+                or edge_count      <= 2
+                or (gamma / init_gamma)           <= 0.001)
 
     return cond, gamma
 

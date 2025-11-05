@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """DQN agents trained on Breakthrough by independent Q-learning."""
-from utils.environment.game import GraphGame
+from utils.environment.game_new import GraphGame
 from utils.environment.nodeCentrality import Node_Centrality
 from utils.environment.globalFeature import Global_Feature
 from utils.reinforcement_learning.rl_environment import Environment

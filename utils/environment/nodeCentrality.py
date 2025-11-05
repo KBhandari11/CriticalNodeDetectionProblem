@@ -7,7 +7,8 @@ from torch_geometric.utils import to_undirected
 from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
 from igraph import Graph
-
+import multiprocessing
+from multiprocessing import Pool
 
 
 class Node_Centrality():
@@ -18,13 +19,25 @@ class Node_Centrality():
             self.feature = feature
 
     def get_centrality_features(self, G):
-        centrality = {}
+        centrality = {}    
         for f in self.feature:
             centrality[f] = getattr(self, 'case_' + f)(G)
         x = np.column_stack(list(centrality.values()))
         x = np.nan_to_num(x,nan = 0)
         x = torch.from_numpy(x.astype(np.float32))
         return x
+        '''centrality = {}    
+        centralityFunction = lambda x: getattr(self, 'case_' + x)(G)
+        num_processes = multiprocessing.cpu_count()
+        results = []
+        with Pool(num_processes) as p:
+            results.append(p.map(centralityFunction, self.feature))
+        for i, f in enumerate(self.feature):
+            centrality[f] = results[i][0]
+        x = np.column_stack(list(centrality.values()))
+        x = np.nan_to_num(x,nan = 0)
+        x = torch.from_numpy(x.astype(np.float32))
+        return x'''
 
     def case_degree(self, g):
         """Get degree value of each node for the Graph"""
@@ -55,7 +68,7 @@ class Node_Centrality():
 
     def case_active(self, g):
         """Get active value of each node for the Graph"""
-        return np.array(g.nodes.data("active"))[:,1]
+        return np.array(g.vs()["active"])#np.array(g.nodes.data("active"))[:,1]
     
     '''def get_Ball(self,g,v,l,n):
         """Get Ball value of a node'v', within length 'l' with neighbour of 'n'"""
@@ -89,14 +102,21 @@ class Node_Centrality():
         ci = []
         degs = np.array(g.degree())
         #G_nx = g.to_networkx()
+        results = []
         for i in g.vs.indices:            
-            #n = self.get_Ball(g,i,l,[i]) 
-            n = self.get_Ball(g,i,[i]) 
+            #n = self.get_Ball(g,i,l,[i])
+            #result = pool.apply_async(self.get_Ball, args= ((g,i,[i]),))
+            result = self.get_Ball(g,i,[i])
+            results.append((i,result))
             #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
             #np.array([path[-1] for path in g.get_shortest_paths(i) if path and len(path) <= l])
             #print("path",n)
             #print("ball",get_Ball(g,i,l,[i]))
             #print("networkx",list(nx.single_source_shortest_path(G_nx,i,l))[0:])
+        #pool.join()
+        #pool.close()
+        for result in results:
+            i, n = result#result.get()
             j = np.sum(degs[n] - 1)
             ci.append((g.degree(i) - 1) * j)
         ci = np.array(ci)

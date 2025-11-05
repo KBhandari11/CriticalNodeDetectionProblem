@@ -14,3 +14,10 @@ __pycache__
 graphworld/
 gif/
 decycler/
+dataset/
+log/
+Figure/
+Eval_RealWorld/
+Evaluation_Notebook/
+Test/
+*.ipynb 
