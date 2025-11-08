@@ -20,4 +20,5 @@ Figure/
 Eval_RealWorld/
 Evaluation_Notebook/
 Test/
-*.ipynb 
+*.ipynb
+*.sh 

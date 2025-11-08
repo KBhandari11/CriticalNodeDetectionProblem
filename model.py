@@ -13,6 +13,8 @@ from utils.params import Params
 from utils.getClass import objective_function,get_class_from_file
 from multiprocessing import Pool
 
+device =torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+
 import torch
 import numpy as np
 import json
@@ -22,6 +24,76 @@ import gc
 def _generate_one_graph(args):
         graph_type, seed = args
         return gen_new_graphs(graph_type=graph_type, seed=seed)
+
+def _load_meta(checkpoint_base):
+    """
+    Load training metadata for resuming:
+    - checkpoint_base: base path (e.g., './checkpoints/run1')
+    Returns a dict with fields:
+      last_episode, best_auc, best_ep, last_epsilon
+    """
+    meta_path = f"{checkpoint_base}_meta.json"
+    if os.path.exists(meta_path):
+        try:
+            with open(meta_path, "r") as f:
+                meta = json.load(f)
+            # fill defaults if missing
+            meta.setdefault("last_episode", 0)
+            meta.setdefault("best_auc", float("inf"))
+            meta.setdefault("best_ep", None)
+            meta.setdefault("last_epsilon", None)
+            return meta
+        except Exception as e:
+            print(f"[Warning] Failed to read meta file {meta_path}: {e}")
+    # Default if no meta file found
+    return {"last_episode": 0, "best_auc": float("inf"), "best_ep": None, "last_epsilon": None}
+
+
+def _read_last_log_entry(path):
+    """
+    Read and print all lines from a JSONL training log file,
+    and extract the most recent episode and epsilon.
+    Returns (last_episode, last_epsilon).
+    """
+
+    if not os.path.exists(path):
+        print(f"[Info] No log file found at {path}")
+        return 0, None
+
+    try:
+        with open(path, "r") as f:
+            lines = f.readlines()
+
+        print(f"\n[Debug] ===== Printing all log entries from {path} =====")
+        for i, line in enumerate(lines):
+            if (i+1)%100==0:
+                print(f"Line {i+1}: {line.strip()}")
+        print("[Debug] ===== End of log file =====\n")
+
+        if not lines:
+            print("[Info] Log file is empty.")
+            return 0, None
+
+        # Parse last line
+        last_line = lines[-1].strip()
+        if not last_line:
+            print("[Warning] Last line is empty.")
+            return 0, None
+
+        rec = json.loads(last_line)
+        last_ep = int(rec.get("episode", 0))
+        last_eps = float(rec.get("epsilon")) if rec.get("epsilon") is not None else None
+        print(f"[Debug] Last recorded episode: {last_ep}, epsilon: {last_eps}")
+        return last_ep, last_eps
+
+    except Exception as e:
+        print(f"[Warning] Could not read or parse log file {path}: {e}")
+        return 0, None
+
+def _save_meta(checkpoint_base, meta):
+    meta_path = f"{checkpoint_base}_meta.json"
+    with open(meta_path, "w") as f:
+        json.dump(meta, f)
 
 class BenchMark():
     def __init__(self,path):
@@ -83,8 +155,42 @@ class BenchMark():
         evaluation, eval_x = get_Validation(size_CV)#get_Validation(4,file_path)
         CV_AUC = []
         log_path = self.params.training_log
-        if os.path.exists(log_path):
-            os.remove(log_path)
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        # ---- Resume state (from meta + log + latest checkpoint) ----
+        meta = _load_meta(self.params.checkpoint_dir)
+        last_logged_ep, last_log_epsilon = _read_last_log_entry(log_path)
+
+        # Throttling: how often to save the "latest" checkpoint
+        save_latest_every = int(
+            getattr(self.params, "save_latest_every",
+                    getattr(self.params, "eval_every", 500))
+        )
+        save_latest_every = max(1, save_latest_every)  # safety
+
+        ep_start = 0
+        best_auc = float("inf")
+        best_ep = None
+        
+        # Determine resume epsilon
+        resume_epsilon = None
+        if meta.get("last_epsilon") not in [None, "None"]:
+            try:
+                resume_epsilon = float(meta["last_epsilon"])
+            except Exception:
+                resume_epsilon = None
+
+        if (resume_epsilon is None or resume_epsilon <= 0.0) and last_log_epsilon is not None:
+            resume_epsilon = float(last_log_epsilon)
+
+        # Default if still None
+        if resume_epsilon is None:
+            resume_epsilon = float(self.params.epsilon_start)
+        else:
+            print(f"[Resume] Using saved epsilon_start={resume_epsilon:.6f}")
+
+        # Override epsilon_start dynamically
+        self.params.epsilon_start = resume_epsilon
+
         if agent == None:
             agent = DQN(
                     gnn_model = self.params.gnn_model,
@@ -106,9 +212,47 @@ class BenchMark():
                     GraphNN = self.GNN)
         #agents.append(random_agent.RandomAgent(player_id=1, num_actions=num_actions))
         graph_batch_size = self.params.graph_batch_size
-        best_auc = np.inf  # or np.inf if you're minimizing
-        best_checkpoint = None
-        for ep in range(int(self.params.num_train_episodes)):
+        latest_ckpt_path = f"{self.params.checkpoint_dir}_latest.pt"
+        best_ckpt_path   = f"{self.params.checkpoint_dir}_best.pt"
+
+        if os.path.exists(latest_ckpt_path):
+            try:
+                ckpt = torch.load(latest_ckpt_path, map_location="cpu")
+                agent._q_network.load_state_dict(ckpt["_q_network"])
+                agent._target_q_network.load_state_dict(ckpt["target_q_network"])
+                agent._optimizer.load_state_dict(ckpt["_optimizer"])
+                # Epsilon: prefer meta, fall back to last log, otherwise keep agent default
+                if meta.get("last_epsilon") is not None:
+                    agent.epsilon = meta["last_epsilon"]
+                    agent.epsilon_start = last_log_epsilon 
+                elif last_log_epsilon is not None:
+                    agent.epsilon = last_log_epsilon
+                    agent.epsilon_start = last_log_epsilon 
+
+                ep_start = int(max(meta.get("last_episode", 0), last_logged_ep))
+                best_auc = float(meta.get("best_auc", float("inf")))
+                best_ep = meta.get("best_ep", None)
+                print(f"[Resume] Loaded latest checkpoint at episode {ep_start}, epsilon={agent.epsilon}, best_auc={best_auc}, best_ep={best_ep}")
+            except Exception as e:
+                print(f"[Resume] Failed to load latest checkpoint ({e}). Starting fresh.")
+        else:
+            print("[Resume] No latest checkpoint found. Starting fresh.")
+
+        #pregenerate it if needed
+        # ----- Pre-generate batch when resuming -----
+        # If resuming mid-batch, regenerate the correct batch deterministically.
+        if ep_start == 0:
+            if (ep_start) % self.params.graph_suffle == 0:
+                Batch_Graph = self.Generate_Batch_Graph(graph_batch_size, seed=ep_start)
+        else:
+            # Determine last shuffle boundary to regenerate the correct batch
+            last_shuffle_seed = int((ep_start // self.params.graph_suffle) * self.params.graph_suffle)
+            print(f"[Resume] Regenerating graph batch for shuffle seed {last_shuffle_seed}")
+            Batch_Graph = self.Generate_Batch_Graph(graph_batch_size, seed=last_shuffle_seed)
+        
+        num_eps = int(self.params.num_train_episodes)
+
+        for ep in range(ep_start, num_eps):
             if (ep) % self.params.graph_suffle == 0:
                 Batch_Graph = self.Generate_Batch_Graph(graph_batch_size,seed=ep)
             g = Batch_Graph[int(ep%graph_batch_size)].copy()
@@ -119,46 +263,68 @@ class BenchMark():
             # Episode is over, step agent with final info state.
             agent.step(time_step)
 
-            episode_log = {"episode": ep + 1, "loss": float(agent._last_loss_value) if agent._last_loss_value != None else None , "reward": float(env.get_state._returns), "epsilon": float(agent.epsilon)}
+            episode_log = {"episode": ep + 1, 
+                            "loss": float(agent._last_loss_value) if agent._last_loss_value != None else None , 
+                            "reward": float(env.get_state._returns), 
+                            "epsilon": float(agent.epsilon),
+                            "eval_auc": None
+                        }
 
-            if (ep+1)%100==0:
-                print(f"episode: {ep}, loss: {agent._last_loss_value}, cummulative_reward:{env.get_state._returns},epsilon:{agent.epsilon}", end=" ", flush=True)
-            if (ep + 1) % self.params.eval_every == 0 :
+            # Periodic evaluation
+            if (ep + 1) % self.params.eval_every == 0:
+                _eps_cache = float(agent.epsilon) 
                 meanAUC = self.validation(size_CV, env, agent, evaluation, eval_x)
-                CV_AUC.append(meanAUC)
                 episode_log["eval_auc"] = float(meanAUC)
                 print(f"Evaluation_Dataset: {meanAUC}", end=" ", flush=True)
-                
-                # Save only if this is the best so far
-                if meanAUC < best_auc:  
-                    best_auc = meanAUC
+                agent.epsilon = _eps_cache  
+                # Save BEST immediately (not throttled)
+                if meanAUC < best_auc:
+                    best_auc = float(meanAUC)
+                    best_ep = ep + 1
                     best_checkpoint = {
-                        '_q_network': agent._q_network.state_dict(),
-                        'target_q_network': agent._target_q_network.state_dict(),
-                        '_optimizer': agent._optimizer.state_dict()
+                        "_q_network": agent._q_network.state_dict(),
+                        "target_q_network": agent._target_q_network.state_dict(),
+                        "_optimizer": agent._optimizer.state_dict(),
                     }
-                    best_ep = ep + 1  # store best episode
-            else:
-                episode_log["eval_auc"] = None
-            '''if (ep + 1) % self.params.save_every == 0:
-                checkpoint = {'_q_network': agent._q_network.state_dict(),'target_q_network': agent._target_q_network.state_dict(),'_optimizer' :agent._optimizer.state_dict()}
-                title = self.params.checkpoint_dir+"_"+str(ep+1)
-                torch.save(checkpoint, title)'''
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, 'a') as f:  # use 'a' to append instead of overwrite
-                f.write(json.dumps(episode_log) + '\n')
-            if (ep+1)%100==0:
+                    torch.save(best_checkpoint, best_ckpt_path)
+                    print(f"\n[Checkpoint] BEST @ ep {best_ep} | AUC {best_auc:.6f}")
+
+            # Append to log
+            with open(log_path, "a") as f:
+                f.write(json.dumps(episode_log) + "\n")
+
+                
+            # ---------- Throttled saving of LATEST checkpoint ----------
+            if ((ep + 1) % save_latest_every == 0) or ((ep + 1) == num_eps):
+                latest_checkpoint = {
+                    "_q_network": agent._q_network.state_dict(),
+                    "target_q_network": agent._target_q_network.state_dict(),
+                    "_optimizer": agent._optimizer.state_dict(),
+                }
+                torch.save(latest_checkpoint, latest_ckpt_path)
+
+                # Update meta only on save to keep disk I/O low
+                meta["last_episode"] = ep + 1
+                meta["last_epsilon"] = float(agent.epsilon)
+                meta["best_auc"] = best_auc
+                meta["best_ep"] = best_ep
+                _save_meta(self.params.checkpoint_dir, meta)
+
+            # Periodic prints
+            if (ep + 1) % 100 == 0:
+                print(f"episode: {ep}, loss: {agent._last_loss_value}, cummulative_reward:{env.get_state._returns}, epsilon:{agent.epsilon}",flush=True)
                 gc.collect()
-                print(" ")
 
             del g
 
-        if best_checkpoint:
-            title = self.params.checkpoint_dir + "_" + str(best_ep)
-            torch.save(best_checkpoint, title)
-            print(f"\nBest model saved at episode {best_ep} with AUC {best_auc:.4f}")
-            self.best_dir = title  # update best_dir to this path
-        self.bestModel(CV_AUC)
+        # Finalize: choose best_dir
+        if best_ep is not None and os.path.exists(best_ckpt_path):
+            print(f"\nBest model: ep {best_ep} | AUC {best_auc:.4f} | path: {best_ckpt_path}")
+            self.best_dir = best_ckpt_path
+        else:
+            print("\nNo best improvement recorded; using latest for best_dir.")
+            self.best_dir = latest_ckpt_path
+
 
     def evaluation(self, graphpath, bestModel=None, useSingleStep= False):
         """

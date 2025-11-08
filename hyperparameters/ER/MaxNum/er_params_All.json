@@ -8,7 +8,7 @@
     "centrality_feature_name":["degree","eigen", "pagerank","ci"],
     "global_feature_name":["heterogeneity","density", "resilience","gini","entropy","transitivity"],
     "GNN": ["utils/reinforcement_learning/GraphNN.py","GraphNN"],
-    "objective_function": "largestConnectedComponent",
+    "objective_function": "numberConnectedComponent",
     "centrality_features": 4,
     "global_features": 6,
     "save_every": 500,

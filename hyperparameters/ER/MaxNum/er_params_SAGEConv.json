@@ -1,10 +1,10 @@
 {
-    "architecture": "GAT and DQN",
-    "graph_type": ["barabasi_albert"],
+    "architecture": "SAGEConv and DQN",
+    "graph_type": ["erdos_renyi"],
     "centrality_feature_name":["degree","eigen", "pagerank","ci","active"],
     "GNN": ["utils/reinforcement_learning/GraphNN.py","GraphNN"],
-    "gnn_model": "GAT",
-    "objective_function": "pairwiseConnectivity",
+    "gnn_model": "SAGEConv",
+    "objective_function": "numberConnectedComponent",
     "global_feature_name":["heterogeneity","resilience","entropy"],
     "centrality_features": 5,
     "global_features": 3,
@@ -28,6 +28,6 @@
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
     "best_model": 66500 ,
-    "checkpoint_dir": "./newresults/model/TS/6centrality_6global_GAT/BA_Graph/CNP/model_BAGraph",
-    "training_log": "./newresults/model/TS/6centrality_6global_GAT/BA_Graph/CNP/training_log.json"
+    "checkpoint_dir": "/gpfs/u/home/LLMG/LLMGbhnd/scratch/CNDP_data/SAGEConv/ER_Graph/MaxNum/model_ERGraph",
+    "training_log": "/gpfs/u/home/LLMG/LLMGbhnd/scratch/CNDP_data/SAGEConv/ER_Graph/MaxNum/training_log.json"
 }

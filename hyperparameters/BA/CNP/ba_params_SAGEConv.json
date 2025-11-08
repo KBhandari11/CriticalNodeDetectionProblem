@@ -28,6 +28,6 @@
     "epsilon_end":0.01,
     "epsilon_decay_duration": 2e7,
     "best_model": 66500 ,
-    "checkpoint_dir": "./newresults/model/TS/6centrality_6global_SAGEConv/BA_Graph/CNP/model_BAGraph",
-    "training_log": "./newresults/model/TS/6centrality_6global_SAGEConv/BA_Graph/CNP/training_log.json"
+    "checkpoint_dir": "/gpfs/u/home/LLMG/LLMGbhnd/scratch/CNDP_data/SAGEConv/BA_Graph/CNP/model_BAGraph",
+    "training_log": "/gpfs/u/home/LLMG/LLMGbhnd/scratch/CNDP_data/SAGEConv/BA_Graph/CNP/training_log.json"
 }
