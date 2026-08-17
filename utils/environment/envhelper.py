@@ -39,7 +39,7 @@ def gen_graph(cur_n, g_type,seed=None):
     elif g_type == 'barabasi_albert':
         g = Graph.Barabasi(n=cur_n, m=random.randint(1,10),directed=False)
     elif g_type == 'geometric':
-        g = Graph.GSG(n=cur_n, radius=random.uniform(0.1,0.4),directed=False)
+        g = Graph.GRG(n=cur_n, radius=random.uniform(0.1,0.4), torus=True)
     g.vs['name'] = range(cur_n)
     return g
 

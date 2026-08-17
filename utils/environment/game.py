@@ -7,21 +7,22 @@ from  utils.environment.envhelper import*
 class GraphGame():
   """ The Graph game for node removal"""
 
-  def __init__(self,Graph, objectiveFunction, centralityFeature, globalFeature):
+  def __init__(self,Graph, objectiveFunction, centralityFeature, globalFeature, alpha):
     self.Graph = Graph
     self.objectiveFunction = objectiveFunction
     self.centralityFeature =  centralityFeature
     self.globalFeature = globalFeature  
+    self.alpha = alpha
 
-  def new_initial_state(Graph, objectiveFunction, centralityFeature, globalFeature):
+  def new_initial_state(Graph, objectiveFunction, centralityFeature, globalFeature, alpha):
     """Returns a state corresponding to the start of a game."""
-    return GraphState(Graph,objectiveFunction, centralityFeature, globalFeature)
+    return GraphState(Graph,objectiveFunction, centralityFeature, globalFeature, alpha)
 
 
 
 class GraphState():
   """Graph State"""
-  def __init__(self, Graph,objectiveFunction ,centralityFeature, globalFeature):
+  def __init__(self, Graph,objectiveFunction ,centralityFeature, globalFeature, alpha):
     self._is_terminal = False
     self.Graph = Graph
     self.objectiveFunction = objectiveFunction
@@ -35,7 +36,7 @@ class GraphState():
     self.reward1 = [self.objectiveFunction(self.Graph)]
     self.reward2 = [molloy_reed(self.Graph)]
     self.r = []
-    self.alpha = 0.75#(1-nx.density(self.Graph))
+    self.alpha = alpha#(1-nx.density(self.Graph))
     
 
   def _legal_actions(self):
@@ -61,11 +62,15 @@ class GraphState():
     norm_gamma = abs(self.reward1[-1] - gamma)/self.reward1[-1]
     norm_beta = abs(self.reward2[-1] - beta)/self.reward2[-1]
     self._rewards = ((self.num_nodes-len(self.reward1))/self.num_nodes)* (self.alpha * norm_gamma +(1-self.alpha)*norm_beta)
+    '''if cond: # If the game is over (network dismantled)
+      bonus = 10.0 * (self.num_nodes / len(self.reward1)) 
+      self._rewards += bonus'''
     self._returns += self._rewards
     self.reward2.append(beta)  
     self.reward1.append(gamma)
     self.r.append(self._rewards)
     self._is_terminal = cond
+    
     #print(cond,self.info_state.edge_index.size())
     
   def _action_to_string(self, player, action):
@@ -87,7 +92,7 @@ class GraphState():
     """String for debug purposes. No particular semantics are required."""
     return board_to_string(self.Graph)
 
-  def new_initial_state(self,Graph,objectiveFunction,centralityFeature, globalFeature):
+  def new_initial_state(self,Graph,objectiveFunction,centralityFeature, globalFeature, alpha):
       self.Graph = Graph
       self.objectiveFunction = objectiveFunction
       self.info_state =  from_igraph(centralityFeature,self.Graph)
@@ -95,5 +100,7 @@ class GraphState():
       self.reward1 = [objectiveFunction(self.Graph)]
       self.reward2 = [molloy_reed(self.Graph)]
       self.r = []
-      self.alpha = 0.75#(1-nx.density(self.Graph))
+      self.alpha = alpha#(1-nx.density(self.Graph))
+      self._returns = 0.0
+      self._rewards = 0.0
       

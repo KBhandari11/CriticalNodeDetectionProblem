@@ -6,9 +6,10 @@ from torch_geometric.data import Data
 from torch_geometric.utils import to_undirected
 from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
-from igraph import Graph
+from igraph import Graph, ARPACKOptions
 import multiprocessing
 from multiprocessing import Pool
+
 
 
 class Node_Centrality():
@@ -45,12 +46,18 @@ class Node_Centrality():
 
     def case_eigen(self, g):
         """Get eigencentrality value of each node for the Graph"""
+
         try:
             eigen_centrality = np.array(g.eigenvector_centrality())
         except:
             #ARPACKOptions.tol =  int(10e-2)
             #value = Graph.arpack_defaults.tol = int(10e-2)
-            eigen_centrality = np.array(g.eigenvector_centrality())
+            opt = ARPACKOptions()
+            opt.maxiter = 20000
+            opt.tol = float(1e-2)
+            eigen_centrality = np.array(g.eigenvector_centrality(arpack_options=opt))
+
+
         return eigen_centrality
 
     def case_pagerank(self, g):

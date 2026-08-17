@@ -11,7 +11,8 @@ def input_graph(graph_path,file):
 def EvaluateModel_LimitedAction(action_list,objectiveFunction,GRAPH,initialGamma):
     actionList = []
     gammaList = []
-    for action in action_list:
+    cond = False
+    for idx, action in enumerate(action_list):
         GRAPH.vs[action]["active"] = 0
         ebunch = GRAPH.incident(action)
         GRAPH.delete_edges(ebunch)
@@ -23,7 +24,7 @@ def EvaluateModel_LimitedAction(action_list,objectiveFunction,GRAPH,initialGamma
     return GRAPH, gammaList, actionList, cond
 
 # Given an environment and an trained agent we implement the agent
-def EvaluateModel(env,objectiveFunction,nodeCentrality,globalFeature,trained_agent,GRAPH, useSingleStep= None):
+def EvaluateModel(env,objectiveFunction,nodeCentrality,globalFeature,alpha,trained_agent,GRAPH, useSingleStep= None):
     """Evaluates `trained_agents` against a new graph."""
     N = GRAPH.vcount()
     episode_rewards = []
@@ -33,7 +34,7 @@ def EvaluateModel(env,objectiveFunction,nodeCentrality,globalFeature,trained_age
         reward1 = [objectiveFunction(GRAPH)]
         cond = False
         while not cond:
-            time_step = env.reset(GRAPH,objectiveFunction,nodeCentrality,globalFeature)
+            time_step = env.reset(GRAPH,objectiveFunction,nodeCentrality,globalFeature, alpha)
             _ , prob = trained_agent.step(time_step, is_evaluation=True)
             legal_actions = env._state._legal_actions() 
             #prob = [prob[p] if p in legal_actions else -100 for p in range(len(prob))]
@@ -45,12 +46,13 @@ def EvaluateModel(env,objectiveFunction,nodeCentrality,globalFeature,trained_age
                     actions.append(argmax)
                     i+=1
                 prob[argmax]=-100
+            
             GRAPH, output, actionsUsed, cond = EvaluateModel_LimitedAction(actions,objectiveFunction,GRAPH,N)
             action_lists += actionsUsed
             reward1+=output
         return [], reward1, action_lists
     else:
-        time_step = env.reset(GRAPH,objectiveFunction,nodeCentrality,globalFeature)
+        time_step = env.reset(GRAPH,objectiveFunction,nodeCentrality,globalFeature,alpha)
         while not time_step.last():
             agent_output, prob = trained_agent.step(time_step, is_evaluation=True)
             action_lists.append(agent_output)
@@ -71,11 +73,12 @@ def eval_network_dismantle(board,objectiveFunction, init_gamma):
     gamma = objectiveFunction(board)
     if objectiveFunction.__name__ == "numberConnectedComponent":
         N = board.vcount()
-        cond = True if ((N-gamma)/N) <= 0.001 or (board.ecount() == 0)else False
+        cond = True if all_nodes.size <= 2 or ((N-gamma+1)/N) <= 0.001 or (board.ecount() == 0) else False
     else:
-        cond = True if (gamma/init_gamma) <= 0.001 else False
+        cond = True if all_nodes.size <= 2 or (gamma/init_gamma) <= 0.001 or (board.ecount() == 0) else False
     return cond, gamma
 
+        
 def EvaluateACTION(action_list,objectiveFunction,GRAPH, useIndex):
     """Evaluates the env for given action_list"""
     '''G = GRAPH.to_networkx()
@@ -86,6 +89,9 @@ def EvaluateACTION(action_list,objectiveFunction,GRAPH, useIndex):
     print(G.nodes())'''
     gammaList = [objectiveFunction(GRAPH)]
     actionList = []
+    if len(action_list) != GRAPH.vcount():
+        other_list = set([v.index for v in GRAPH.vs]).difference(set(action_list))
+        action_list = np.concatenate((action_list, np.array(list(other_list))))
     for action in action_list:
         if useIndex:
             ebunch = GRAPH.incident(action)

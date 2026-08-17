@@ -1,9 +1,23 @@
-matplotlib 
-tqdm
-numpy
-wandb
-networkx
-imageio
-open_spiel
-jupyter
+# Core deep learning
+# Install PyTorch first: https://pytorch.org/get-started/locally/
+# Example (CPU): pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Example (CUDA 12.1): pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch
 
+# PyTorch Geometric — install AFTER torch (version must match your torch install):
+# https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html
+# Example: pip install torch_geometric
+torch_geometric
+
+# Graph library (igraph C backend)
+igraph
+
+# Scientific computing
+numpy
+scipy
+scikit-learn
+networkx
+
+# Utilities
+tqdm
+matplotlib

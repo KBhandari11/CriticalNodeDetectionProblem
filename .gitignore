@@ -1,25 +1,69 @@
-#ignore VS code 
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
 .vscode/
-#ignore Notebook Checkpoints
-.ipynb_checkpoints/
-#largefile Model
-#model/
-ipython
-#wandb
-wandb/
-model/
-__pycache__
 .DS_Store
-#graphworld
-graphworld/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Model checkpoints (large binaries) ────────────────────────────────────────
+model/
+
+# ── Training logs and outputs ─────────────────────────────────────────────────
+log/
+training_log.json
+TrainingProperties/
+
+# ── Experiment result directories ─────────────────────────────────────────────
+Ablations_Results*/
+200K epoch/
+Eval_RealWorld/
+Test/
+
+# ── Old / variant hyperparameter files (use configs/ instead) ─────────────────
+hyperparameters/
+hyperparameters_new/
+
+# ── Datasets (large; obtain separately — see README) ──────────────────────────
+Dataset/
+
+# ── Baseline comparison methods (not part of core pipeline) ───────────────────
+FINDER/
+GDM/
+MultiDismantler/
+CoreHD/
+CI/
+Spectral_Analysis/
+
+# ── Generated figures ─────────────────────────────────────────────────────────
+Figure/
 gif/
+
+# ── Experiment tracking ───────────────────────────────────────────────────────
+wandb/
+
+# ── Loose root-level files (ablation summaries, scratch graphs, images) ───────
+ablations_*.txt
+train_eval_properties.txt
+arenas-meta.txt
+*.png
+
+# ── Non-essential / analysis-only scripts ─────────────────────────────────────
+Different_Graph.py
+weight_analysis.py
+large_dataset_properties.py
+test_synthetic_dataset_properties.py
+training_dataset_properties.py
+run_ablation_evaluation.py
+run_real_world.py
+benchmark.sh
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+graphworld/
 decycler/
 dataset/
-log/
-Figure/
-Eval_RealWorld/
 Evaluation_Notebook/
-Test/
-*.ipynb
-*.sh 
-hyperparameters/
+*.sh

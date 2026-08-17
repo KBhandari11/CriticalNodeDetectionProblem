@@ -13,7 +13,7 @@ from igraph import Graph
 class Global_Feature():
     def __init__(self, feature = None):
         if feature == None:
-            self.feature = ["heterogeneity","density","resilience","gini","entropy","transitivity"]
+            self.feature = ["heterogeneity","density","resilience","gini","entropy","transitivity","diameter"]
         elif feature == []:
             self.feature = ["none"]
         else:
@@ -66,6 +66,9 @@ class Global_Feature():
     def case_transitivity(self,g):
         '''Get Transitivity Value of the graph'''
         return g.transitivity_undirected()
+    def case_diameter(self,g):
+        '''Get Diameter Value of the graph'''
+        return g.diameter(g)
     def case_none(self, g):
         '''Return empty array for NONE'''
         return np.array([])
