@@ -1,4 +1,4 @@
-# Graph Dismantling with Deep Reinforcement Learning
+# Boosting Reinforcement Learning for Critical Node Detection with Multi-Topology Training Strategies
 
 A Deep Q-Network (DQN) agent with Graph Attention Networks (GAT) that learns to identify **critical nodes** — the minimal set of nodes whose removal maximally disrupts a network's connectivity.
 
@@ -59,22 +59,22 @@ pip install -r requirements.txt
 Training generates synthetic graphs on-the-fly, so no dataset download is required.
 
 ```bash
-python main.py -i configs/ba_lcc.json
+python main.py -i configs/ba_minmax.json
 ```
 
 To set a specific random seed (for reproducibility):
 
 ```bash
-python main.py -i configs/ba_lcc.json -s 42
+python main.py -i configs/ba_minmax.json -s 42
 ```
 
 ### Available configs
 
 | Config | Graph type | Objective |
 |--------|-----------|-----------|
-| `configs/ba_lcc.json` | Barabasi–Albert | Minimize LCC |
-| `configs/er_lcc.json` | Erdős–Rényi | Minimize LCC |
-| `configs/mixed_lcc.json` | BA + ER + SW + Power-law | Minimize LCC (best for generalization) |
+| `configs/ba_minmax.json` | Barabasi–Albert | Minimize LCC |
+| `configs/er_minmax.json` | Erdős–Rényi | Minimize LCC |
+| `configs/mixed_minmax.json` | BA + ER + SW + Power-law | Minimize LCC (best for generalization) |
 
 ### Training outputs
 
@@ -107,7 +107,7 @@ Run a trained model on any graph provided as a space-separated edge list:
 
 ```bash
 python infer.py \
-  -i configs/ba_lcc.json \
+  -i configs/ba_minmax.json \
   -m model/ba_lcc/checkpoint_best.pt \
   -g path/to/your_graph.txt
 ```
@@ -157,9 +157,9 @@ RESULTS
 ├── infer.py                 # Inference entry point
 ├── requirements.txt         # Python dependencies
 ├── configs/                 # Hyperparameter configs (edit these)
-│   ├── ba_lcc.json          # Barabasi-Albert, minimize LCC
-│   ├── er_lcc.json          # Erdos-Renyi, minimize LCC
-│   └── mixed_lcc.json       # Mixed graph types, minimize LCC
+│   ├── ba_minmax.json          # Barabasi-Albert, minimize LCC
+│   ├── er_minmax.json          # Erdos-Renyi, minimize LCC
+│   └── mixed_minmax.json       # Mixed graph types, minimize LCC
 └── utils/
     ├── params.py            # Config loader
     ├── validation.py        # Validation graph generation + AUC
