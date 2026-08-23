@@ -27,9 +27,6 @@ Test/
 hyperparameters/
 hyperparameters_new/
 
-# ── Datasets (large; obtain separately — see README) ──────────────────────────
-Dataset/
-
 # ── Baseline comparison methods (not part of core pipeline) ───────────────────
 FINDER/
 GDM/
@@ -64,6 +61,8 @@ benchmark.sh
 # ── Misc ──────────────────────────────────────────────────────────────────────
 graphworld/
 decycler/
-dataset/
 Evaluation_Notebook/
 *.sh
+
+Dataset/**/*.png
+
